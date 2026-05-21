@@ -49,12 +49,11 @@ export default function PurchasePage() {
       const user = auth.currentUser
       if (!user) throw new Error('غير مسجل')
 
-      const ts = Date.now()
       let idF = '', idB = '', resF = '', resB = ''
-      if (files.id_card_front) idF = await uploadFile(files.id_card_front, `docs/${user.uid}/${ts}_id_front`)
-      if (files.id_card_back) idB = await uploadFile(files.id_card_back, `docs/${user.uid}/${ts}_id_back`)
-      if (files.residence_card_front) resF = await uploadFile(files.residence_card_front, `docs/${user.uid}/${ts}_res_front`)
-      if (files.residence_card_back) resB = await uploadFile(files.residence_card_back, `docs/${user.uid}/${ts}_res_back`)
+      if (files.id_card_front) idF = await uploadFile(files.id_card_front)
+      if (files.id_card_back) idB = await uploadFile(files.id_card_back)
+      if (files.residence_card_front) resF = await uploadFile(files.residence_card_front)
+      if (files.residence_card_back) resB = await uploadFile(files.residence_card_back)
 
       const customerId = await createCustomer({
         full_name: form.full_name, father_name: form.father_name,

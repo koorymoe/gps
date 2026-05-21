@@ -2,15 +2,17 @@ import {
   collection, doc, addDoc, updateDoc, getDocs, getDoc,
   query, where, orderBy, Timestamp, serverTimestamp
 } from 'firebase/firestore'
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
-import { db, storage } from './config'
+import { db } from './config'
 import { SubscriptionType } from '@/types'
 
-// ---- رفع الصور ----
-export async function uploadFile(file: File, path: string): Promise<string> {
-  const storageRef = ref(storage, path)
-  await uploadBytes(storageRef, file)
-  return getDownloadURL(storageRef)
+// ---- تحويل الصورة لـ Base64 ----
+export async function uploadFile(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
 }
 
 // ---- الزبائن ----
