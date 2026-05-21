@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { loginUser, getUserProfile } from '@/lib/firebase/auth'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -15,28 +15,13 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     setError('')
-
-    const supabase = createClient()
-    const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password })
-
-    if (authError) {
+    try {
+      const user = await loginUser(email, password)
+      const profile = await getUserProfile(user.uid)
+      if (profile?.role === 'admin') router.push('/admin')
+      else router.push('/employee')
+    } catch {
       setError('البريد الإلكتروني أو كلمة المرور غير صحيحة')
-      setLoading(false)
-      return
-    }
-
-    if (data.user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', data.user.id)
-        .single()
-
-      if (profile?.role === 'admin') {
-        router.push('/admin')
-      } else {
-        router.push('/employee')
-      }
     }
     setLoading(false)
   }
@@ -94,9 +79,7 @@ export default function LoginPage() {
                   <input type="password" className="input-field pr-10" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required />
                 </div>
               </div>
-              {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm text-center">{error}</div>
-              )}
+              {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm text-center">{error}</div>}
               <button type="submit" className="btn-primary" disabled={loading}>
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">

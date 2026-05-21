@@ -2,60 +2,32 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { auth } from '@/lib/firebase/config'
+import { createCustomer, createMaintenanceRequest } from '@/lib/firebase/firestore'
 
 export default function MaintenancePage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
-  const [form, setForm] = useState({
-    full_name: '',
-    father_name: '',
-    grandfather_name: '',
-    phone: '',
-    address: '',
-    problem_description: '',
-  })
+  const [form, setForm] = useState({ full_name: '', father_name: '', grandfather_name: '', phone: '', address: '', problem_description: '' })
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
-
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = auth.currentUser
       if (!user) throw new Error('غير مسجل')
 
-      const { data: customer, error: custError } = await supabase
-        .from('customers')
-        .insert({
-          full_name: form.full_name,
-          father_name: form.father_name,
-          grandfather_name: form.grandfather_name,
-          phone: form.phone,
-          address: form.address,
-          id_card_front_url: '',
-          id_card_back_url: '',
-          residence_card_front_url: '',
-          residence_card_back_url: '',
-        })
-        .select()
-        .single()
+      const customerId = await createCustomer({
+        full_name: form.full_name, father_name: form.father_name,
+        grandfather_name: form.grandfather_name, phone: form.phone, address: form.address,
+        id_card_front_url: '', id_card_back_url: '',
+        residence_card_front_url: '', residence_card_back_url: '',
+      })
 
-      if (custError) throw custError
-
-      const { error: mainError } = await supabase
-        .from('maintenance_requests')
-        .insert({
-          customer_id: customer.id,
-          employee_id: user.id,
-          problem_description: form.problem_description,
-          status: 'pending',
-        })
-
-      if (mainError) throw mainError
+      await createMaintenanceRequest({ customer_id: customerId, employee_id: user.uid, problem_description: form.problem_description })
       setSuccess(true)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'حدث خطأ')
@@ -83,23 +55,16 @@ export default function MaintenancePage() {
         <button onClick={() => router.push('/employee')} className="text-gray-400 hover:text-gray-600">← رجوع</button>
         <h1 className="text-2xl font-bold" style={{ color: '#1a3a5c' }}>طلب صيانة 🔧</h1>
       </div>
-
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="card">
           <h3 className="text-lg font-bold mb-5" style={{ color: '#1a3a5c' }}>معلومات الزبون</h3>
           <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="label">الاسم الأول *</label>
-              <input className="input-field" value={form.full_name} onChange={e => setForm(p => ({ ...p, full_name: e.target.value }))} required placeholder="محمد" />
-            </div>
-            <div>
-              <label className="label">اسم الأب *</label>
-              <input className="input-field" value={form.father_name} onChange={e => setForm(p => ({ ...p, father_name: e.target.value }))} required placeholder="أحمد" />
-            </div>
-            <div>
-              <label className="label">اسم الجد *</label>
-              <input className="input-field" value={form.grandfather_name} onChange={e => setForm(p => ({ ...p, grandfather_name: e.target.value }))} required placeholder="علي" />
-            </div>
+            {[['full_name','الاسم الأول','محمد'],['father_name','اسم الأب','أحمد'],['grandfather_name','اسم الجد','علي']].map(([k,l,p]) => (
+              <div key={k}>
+                <label className="label">{l} *</label>
+                <input className="input-field" value={form[k as keyof typeof form]} onChange={e => setForm(prev => ({ ...prev, [k]: e.target.value }))} required placeholder={p} />
+              </div>
+            ))}
           </div>
           <div className="grid grid-cols-2 gap-4 mt-4">
             <div>
@@ -112,24 +77,12 @@ export default function MaintenancePage() {
             </div>
           </div>
         </div>
-
         <div className="card">
           <h3 className="text-lg font-bold mb-5" style={{ color: '#1a3a5c' }}>وصف المشكلة</h3>
-          <textarea
-            className="input-field"
-            rows={5}
-            value={form.problem_description}
-            onChange={e => setForm(p => ({ ...p, problem_description: e.target.value }))}
-            required
-            placeholder="اكتب وصفاً تفصيلياً للمشكلة التي يعاني منها الجهاز..."
-          />
+          <textarea className="input-field" rows={5} value={form.problem_description} onChange={e => setForm(p => ({ ...p, problem_description: e.target.value }))} required placeholder="اكتب وصفاً تفصيلياً للمشكلة..." />
         </div>
-
         {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm text-center">{error}</div>}
-
-        <button type="submit" className="btn-primary" disabled={loading}>
-          {loading ? 'جارٍ الإرسال...' : 'إرسال طلب الصيانة ←'}
-        </button>
+        <button type="submit" className="btn-primary" disabled={loading}>{loading ? 'جارٍ الإرسال...' : 'إرسال طلب الصيانة ←'}</button>
       </form>
     </div>
   )

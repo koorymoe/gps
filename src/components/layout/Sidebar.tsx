@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, usePathname } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { logoutUser } from '@/lib/firebase/auth'
 
 interface SidebarProps {
   role: 'admin' | 'employee'
@@ -12,7 +12,7 @@ const adminLinks = [
   { href: '/admin', label: 'لوحة المراقبة', icon: '📊' },
   { href: '/admin/requests', label: 'الطلبات المعلقة', icon: '📋' },
   { href: '/admin/subscriptions', label: 'الاشتراكات', icon: '📡' },
-  { href: '/admin/renewals', label: 'تجديد الاشتراك', icon: '🔄' },
+  { href: '/admin/renewals', label: 'تجديد اشتراك', icon: '🔄' },
   { href: '/admin/maintenance', label: 'الصيانة', icon: '🔧' },
   { href: '/admin/customers', label: 'الزبائن', icon: '👥' },
 ]
@@ -29,14 +29,12 @@ export default function Sidebar({ role, userName }: SidebarProps) {
   const links = role === 'admin' ? adminLinks : employeeLinks
 
   async function handleLogout() {
-    const supabase = createClient()
-    await supabase.auth.signOut()
+    await logoutUser()
     router.push('/')
   }
 
   return (
     <div className="sidebar flex flex-col">
-      {/* شعار الشركة */}
       <div className="p-6 border-b border-white/10">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, #c9a84c, #e8c96a)' }}>
@@ -56,7 +54,6 @@ export default function Sidebar({ role, userName }: SidebarProps) {
         </div>
       </div>
 
-      {/* معلومات المستخدم */}
       <div className="p-4 mx-3 mt-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.07)' }}>
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-full bg-yellow-400 flex items-center justify-center text-blue-900 font-bold text-sm">
@@ -69,7 +66,6 @@ export default function Sidebar({ role, userName }: SidebarProps) {
         </div>
       </div>
 
-      {/* روابط التنقل */}
       <nav className="flex-1 p-3 mt-2 space-y-1">
         {links.map(link => {
           const isActive = pathname === link.href
@@ -91,7 +87,6 @@ export default function Sidebar({ role, userName }: SidebarProps) {
         })}
       </nav>
 
-      {/* زر تسجيل الخروج */}
       <div className="p-4">
         <button
           onClick={handleLogout}

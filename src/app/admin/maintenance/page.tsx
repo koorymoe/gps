@@ -1,19 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { getAllMaintenanceRequests, updateMaintenanceStatus } from '@/lib/firebase/firestore'
 import { formatDate } from '@/lib/utils'
 
-interface MReq {
-  id: string
-  problem_description: string
-  status: string
-  admin_notes: string | null
-  created_at: string
-  resolved_at: string | null
-  customer: { full_name: string; father_name: string; grandfather_name: string; phone: string; address: string } | null
-  employee: { full_name: string } | null
-}
+interface MReq { id: string; problem_description: string; status: string; admin_notes: string | null; created_at: string; customer: { full_name: string; father_name: string; grandfather_name: string; phone: string; address: string } | null; employee: { full_name: string } | null }
 
 export default function AdminMaintenancePage() {
   const [reqs, setReqs] = useState<MReq[]>([])
@@ -23,38 +14,17 @@ export default function AdminMaintenancePage() {
   const [saving, setSaving] = useState(false)
 
   async function load() {
-    const supabase = createClient()
-    const { data } = await supabase
-      .from('maintenance_requests')
-      .select('*, customer:customers(full_name, father_name, grandfather_name, phone, address), employee:profiles!maintenance_requests_employee_id_fkey(full_name)')
-      .order('created_at', { ascending: false })
-
-    const mapped = (data || []).map((d: unknown) => {
-      const item = d as { id: string; problem_description: string; status: string; admin_notes: string | null; created_at: string; resolved_at: string | null; customer: MReq['customer'] | MReq['customer'][]; employee: { full_name: string } | { full_name: string }[] | null }
-      return {
-        ...item,
-        customer: Array.isArray(item.customer) ? item.customer[0] : item.customer,
-        employee: Array.isArray(item.employee) ? item.employee[0] : item.employee,
-      } as MReq
-    })
-    setReqs(mapped)
+    const data = await getAllMaintenanceRequests()
+    setReqs(data as unknown as MReq[])
     setLoading(false)
   }
-
   useEffect(() => { load() }, [])
 
   async function handleUpdate(newStatus: string) {
     if (!selected) return
     setSaving(true)
-    const supabase = createClient()
-    await supabase.from('maintenance_requests').update({
-      status: newStatus,
-      admin_notes: notes,
-      resolved_at: newStatus === 'completed' ? new Date().toISOString() : null,
-    }).eq('id', selected.id)
-    setSelected(null)
-    setSaving(false)
-    load()
+    await updateMaintenanceStatus(selected.id, newStatus, notes)
+    setSelected(null); setSaving(false); load()
   }
 
   const statusMap: Record<string, { label: string; color: string; bg: string }> = {
@@ -66,10 +36,7 @@ export default function AdminMaintenancePage() {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6" style={{ color: '#1a3a5c' }}>طلبات الصيانة 🔧</h1>
-
-      {loading ? (
-        <div className="text-center text-gray-400 py-20">جارٍ التحميل...</div>
-      ) : reqs.length === 0 ? (
+      {loading ? <div className="text-center text-gray-400 py-20">جارٍ التحميل...</div> : reqs.length === 0 ? (
         <div className="card text-center py-16"><p className="text-gray-400 text-lg">لا توجد طلبات صيانة</p></div>
       ) : (
         <div className="space-y-3">
@@ -79,28 +46,23 @@ export default function AdminMaintenancePage() {
               <div key={req.id} className="bg-white rounded-xl shadow-sm p-5 flex items-center justify-between hover:shadow-md transition-all">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-1">
-                    <span className="font-bold text-gray-800">
-                      {req.customer ? `${req.customer.full_name} ${req.customer.father_name}` : '-'}
-                    </span>
+                    <span className="font-bold text-gray-800">{req.customer ? `${req.customer.full_name} ${req.customer.father_name}` : '-'}</span>
                     <span className="badge" style={{ color: s.color, background: s.bg }}>{s.label}</span>
                   </div>
-                  <p className="text-sm text-gray-500 mb-1 line-clamp-1">🔧 {req.problem_description}</p>
+                  <p className="text-sm text-gray-500 mb-1">🔧 {req.problem_description}</p>
                   <div className="flex gap-4 text-xs text-gray-400">
                     <span>📞 {req.customer?.phone}</span>
                     <span>👤 {req.employee?.full_name}</span>
-                    <span>📅 {formatDate(req.created_at)}</span>
+                    <span>📅 {req.created_at ? formatDate(req.created_at) : '-'}</span>
                   </div>
                 </div>
-                <button onClick={() => { setSelected(req); setNotes(req.admin_notes || '') }} className="btn-secondary text-sm px-4 py-2 mr-4 w-auto">
-                  تفاصيل ←
-                </button>
+                <button onClick={() => { setSelected(req); setNotes(req.admin_notes || '') }} className="btn-secondary text-sm px-4 py-2 mr-4 w-auto">تفاصيل ←</button>
               </div>
             )
           })}
         </div>
       )}
 
-      {/* نافذة التفاصيل */}
       {selected && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl m-4">
@@ -113,7 +75,7 @@ export default function AdminMaintenancePage() {
                 <div><span className="text-gray-500">الاسم: </span><span className="font-semibold">{selected.customer?.full_name} {selected.customer?.father_name} {selected.customer?.grandfather_name}</span></div>
                 <div><span className="text-gray-500">الهاتف: </span><span className="font-semibold">{selected.customer?.phone}</span></div>
                 <div><span className="text-gray-500">العنوان: </span><span className="font-semibold">{selected.customer?.address}</span></div>
-                <div><span className="text-gray-500">التاريخ: </span><span className="font-semibold">{formatDate(selected.created_at)}</span></div>
+                <div><span className="text-gray-500">التاريخ: </span><span className="font-semibold">{selected.created_at ? formatDate(selected.created_at) : '-'}</span></div>
               </div>
               <div>
                 <p className="label">وصف المشكلة</p>
@@ -125,12 +87,8 @@ export default function AdminMaintenancePage() {
               </div>
             </div>
             <div className="border-t p-5 flex gap-3">
-              <button onClick={() => handleUpdate('in_progress')} disabled={saving} className="flex-1 py-2.5 rounded-lg font-semibold text-sm transition-all" style={{ background: '#7c3aed15', color: '#7c3aed' }}>
-                قيد المعالجة
-              </button>
-              <button onClick={() => handleUpdate('completed')} disabled={saving} className="flex-1 py-2.5 rounded-lg font-semibold text-sm transition-all" style={{ background: '#16a34a15', color: '#16a34a' }}>
-                ✅ مكتمل
-              </button>
+              <button onClick={() => handleUpdate('in_progress')} disabled={saving} className="flex-1 py-2.5 rounded-lg font-semibold text-sm" style={{ background: '#7c3aed15', color: '#7c3aed' }}>قيد المعالجة</button>
+              <button onClick={() => handleUpdate('completed')} disabled={saving} className="flex-1 py-2.5 rounded-lg font-semibold text-sm" style={{ background: '#16a34a15', color: '#16a34a' }}>✅ مكتمل</button>
             </div>
           </div>
         </div>
