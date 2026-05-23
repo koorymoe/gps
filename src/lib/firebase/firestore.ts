@@ -54,7 +54,7 @@ export async function createDeviceRequest(data: {
 }
 
 export async function getPendingRequests() {
-  const snap = await getDocs(query(collection(db, 'device_requests'), where('status', '==', 'pending'), orderBy('created_at', 'desc')))
+  const snap = await getDocs(query(collection(db, 'device_requests'), where('status', '==', 'pending')))
   const requests = snap.docs.map(d => ({ id: d.id, ...(d.data() as Record<string, unknown>) })) as Array<{ id: string } & Record<string, unknown>>
 
   // جلب بيانات الزبون لكل طلب
@@ -161,7 +161,7 @@ export async function createMaintenanceRequest(data: {
 }
 
 export async function getAllMaintenanceRequests() {
-  const snap = await getDocs(query(collection(db, 'maintenance_requests'), orderBy('created_at', 'desc')))
+  const snap = await getDocs(collection(db, 'maintenance_requests'))
   const requests = snap.docs.map(d => ({ id: d.id, ...(d.data() as Record<string, unknown>) })) as Array<{ id: string } & Record<string, unknown>>
 
   return Promise.all(requests.map(async (req) => {
