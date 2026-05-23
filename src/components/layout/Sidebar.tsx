@@ -16,6 +16,7 @@ const adminLinks = [
   { href: '/admin/maintenance', label: 'الصيانة', icon: '🔧' },
   { href: '/admin/customers', label: 'الزبائن', icon: '👥' },
   { href: '/admin/employees', label: 'الموظفين', icon: '🧑‍💼' },
+  { href: '/admin/settings', label: 'الإعدادات', icon: '⚙️' },
 ]
 
 const employeeLinks = [

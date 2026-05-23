@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { auth } from '@/lib/firebase/config'
-import { createCustomer, createDeviceRequest, uploadFile } from '@/lib/firebase/firestore'
+import { createCustomer, createDeviceRequest, uploadFile, getSubscriptionPrices } from '@/lib/firebase/firestore'
 import { SubscriptionType } from '@/types'
 
 type PurchaseType = 'device_sim' | 'device_only'
@@ -16,6 +16,7 @@ export default function PurchasePage() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
+  const [prices, setPrices] = useState<{ '3_months': number; '6_months': number; yearly: number }>({ '3_months': 0, '6_months': 0, yearly: 0 })
 
   const [form, setForm] = useState({
     full_name: '', father_name: '', grandfather_name: '',
@@ -25,8 +26,15 @@ export default function PurchasePage() {
   const [files, setFiles] = useState({
     id_card_front: null as File | null, id_card_back: null as File | null,
     residence_card_front: null as File | null, residence_card_back: null as File | null,
+    invoice_photo: null as File | null,
   })
-  const [previews, setPreviews] = useState({ id_card_front: '', id_card_back: '', residence_card_front: '', residence_card_back: '' })
+  const [previews, setPreviews] = useState({
+    id_card_front: '', id_card_back: '', residence_card_front: '', residence_card_back: '', invoice_photo: '',
+  })
+
+  useEffect(() => {
+    getSubscriptionPrices().then(setPrices)
+  }, [])
 
   function handleFileChange(field: keyof typeof files, file: File | null) {
     if (!file) return
@@ -40,7 +48,12 @@ export default function PurchasePage() {
     setError('')
 
     if (purchaseType === 'device_sim' && (!files.id_card_front || !files.id_card_back || !files.residence_card_front || !files.residence_card_back)) {
-      setError('يرجى رفع جميع الصور المطلوبة')
+      setError('يرجى رفع جميع صور الوثائق المطلوبة')
+      setLoading(false)
+      return
+    }
+    if (!files.invoice_photo) {
+      setError('يرجى رفع صورة الفاتورة')
       setLoading(false)
       return
     }
@@ -49,11 +62,12 @@ export default function PurchasePage() {
       const user = auth.currentUser
       if (!user) throw new Error('غير مسجل')
 
-      let idF = '', idB = '', resF = '', resB = ''
+      let idF = '', idB = '', resF = '', resB = '', invoiceUrl = ''
       if (files.id_card_front) idF = await uploadFile(files.id_card_front)
       if (files.id_card_back) idB = await uploadFile(files.id_card_back)
       if (files.residence_card_front) resF = await uploadFile(files.residence_card_front)
       if (files.residence_card_back) resB = await uploadFile(files.residence_card_back)
+      if (files.invoice_photo) invoiceUrl = await uploadFile(files.invoice_photo)
 
       const customerId = await createCustomer({
         full_name: form.full_name, father_name: form.father_name,
@@ -62,10 +76,14 @@ export default function PurchasePage() {
         residence_card_front_url: resF, residence_card_back_url: resB,
       })
 
+      const price = purchaseType === 'device_sim' ? prices[form.subscription_type] : 0
+
       await createDeviceRequest({
         customer_id: customerId, employee_id: user.uid,
         purchase_type: purchaseType,
         subscription_type: purchaseType === 'device_sim' ? form.subscription_type : null,
+        invoice_photo_url: invoiceUrl,
+        price,
       })
 
       setSuccess(true)
@@ -78,8 +96,8 @@ export default function PurchasePage() {
   function resetForm() {
     setSuccess(false); setStep('select_type')
     setForm({ full_name: '', father_name: '', grandfather_name: '', phone: '', address: '', subscription_type: '3_months' })
-    setFiles({ id_card_front: null, id_card_back: null, residence_card_front: null, residence_card_back: null })
-    setPreviews({ id_card_front: '', id_card_back: '', residence_card_front: '', residence_card_back: '' })
+    setFiles({ id_card_front: null, id_card_back: null, residence_card_front: null, residence_card_back: null, invoice_photo: null })
+    setPreviews({ id_card_front: '', id_card_back: '', residence_card_front: '', residence_card_back: '', invoice_photo: '' })
   }
 
   if (success) {
@@ -107,7 +125,7 @@ export default function PurchasePage() {
         <div className="grid grid-cols-2 gap-4">
           {[
             { type: 'device_sim' as PurchaseType, title: 'جهاز + SIM كارد', desc: 'جهاز GPS مع شريحة اتصال واشتراك', icon: '📡' },
-            { type: 'device_only' as PurchaseType, title: 'جهاز فقط', desc: 'جهاز GPS بدون شريحة', icon: '📦' },
+            { type: 'device_only' as PurchaseType, title: 'جهاز فقط', desc: 'جهاز GPS بدون شريحة (شريحة الزبون)', icon: '📦' },
           ].map(opt => (
             <button key={opt.type} onClick={() => { setPurchaseType(opt.type); setStep('form') }}
               className="bg-white rounded-2xl p-6 text-right shadow-sm hover:shadow-md transition-all border-2 border-transparent hover:border-blue-200">
@@ -151,12 +169,21 @@ export default function PurchasePage() {
             <div className="card">
               <h3 className="text-lg font-bold mb-5" style={{ color: '#1a3a5c' }}>نوع الاشتراك</h3>
               <div className="grid grid-cols-3 gap-3">
-                {([['3_months','3 أشهر','ربع سنوي'],['6_months','6 أشهر','نصف سنوي'],['yearly','سنوي','12 شهر']] as const).map(([val,label,sub]) => (
+                {([
+                  ['3_months', '3 أشهر', 'ربع سنوي'],
+                  ['6_months', '6 أشهر', 'نصف سنوي'],
+                  ['yearly', 'سنوي', '12 شهر'],
+                ] as const).map(([val, label, sub]) => (
                   <button key={val} type="button" onClick={() => setForm(p => ({ ...p, subscription_type: val }))}
                     className="p-4 rounded-xl border-2 text-center transition-all"
                     style={{ borderColor: form.subscription_type === val ? '#1a3a5c' : '#e2e8f0', background: form.subscription_type === val ? '#1a3a5c' : 'white', color: form.subscription_type === val ? 'white' : '#1a202c' }}>
                     <div className="font-bold text-lg">{label}</div>
                     <div className="text-xs opacity-70 mt-1">{sub}</div>
+                    {prices[val] > 0 && (
+                      <div className="mt-2 font-bold" style={{ color: form.subscription_type === val ? '#e8c96a' : '#c9a84c' }}>
+                        {prices[val].toLocaleString()} د.ع
+                      </div>
+                    )}
                   </button>
                 ))}
               </div>
@@ -165,17 +192,21 @@ export default function PurchasePage() {
 
           <div className="card">
             <h3 className="text-lg font-bold mb-5" style={{ color: '#1a3a5c' }}>المستندات المطلوبة</h3>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                ['id_card_front','الهوية الوطنية - الوجه الأمامي'],
-                ['id_card_back','الهوية الوطنية - الوجه الخلفي'],
-                ['residence_card_front','بطاقة السكن - الوجه الأمامي'],
-                ['residence_card_back','بطاقة السكن - الوجه الخلفي'],
-              ].map(([key, label]) => (
-                <FileUpload key={key} label={label} preview={previews[key as keyof typeof previews]}
-                  onChange={file => handleFileChange(key as keyof typeof files, file)} />
-              ))}
-            </div>
+            {purchaseType === 'device_sim' && (
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                {[
+                  ['id_card_front', 'الهوية الوطنية - الوجه الأمامي'],
+                  ['id_card_back', 'الهوية الوطنية - الوجه الخلفي'],
+                  ['residence_card_front', 'بطاقة السكن - الوجه الأمامي'],
+                  ['residence_card_back', 'بطاقة السكن - الوجه الخلفي'],
+                ].map(([key, label]) => (
+                  <FileUpload key={key} label={label} preview={previews[key as keyof typeof previews]}
+                    onChange={file => handleFileChange(key as keyof typeof files, file)} />
+                ))}
+              </div>
+            )}
+            <FileUpload label="صورة الفاتورة *" preview={previews.invoice_photo}
+              onChange={file => handleFileChange('invoice_photo', file)} />
           </div>
 
           {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm text-center">{error}</div>}
@@ -192,7 +223,7 @@ function FileUpload({ label, preview, onChange }: { label: string; preview: stri
   const inputRef = useRef<HTMLInputElement>(null)
   return (
     <div>
-      <label className="label">{label} *</label>
+      <label className="label">{label}</label>
       <div onClick={() => inputRef.current?.click()}
         className="border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all hover:border-blue-300 flex items-center justify-center"
         style={{ borderColor: preview ? '#1a3a5c' : '#e2e8f0', minHeight: '120px' }}>

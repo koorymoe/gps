@@ -5,7 +5,11 @@ import { getDeliveredSubscriptions } from '@/lib/firebase/firestore'
 import { getSubscriptionStatus, getStatusLabel, getStatusColor, getRemainingDays, formatDate, getSubscriptionLabel } from '@/lib/utils'
 import { SubscriptionType } from '@/types'
 
-interface Sub { id: string; subscription_end: string; subscription_type: string; customer: { full_name: string; father_name: string; grandfather_name: string; phone: string; address: string } | null }
+interface Sub {
+  id: string; subscription_end: string; subscription_type: string
+  created_at?: string | null; activation_date?: string | null
+  customer: { full_name: string; father_name: string; grandfather_name: string; phone: string; address: string } | null
+}
 
 export default function SubscriptionsPage() {
   const [subs, setSubs] = useState<Sub[]>([])
@@ -36,14 +40,15 @@ export default function SubscriptionsPage() {
         ))}
       </div>
       {loading ? <div className="text-center text-gray-400 py-20">جارٍ التحميل...</div> : (
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          <table className="w-full">
+        <div className="bg-white rounded-2xl shadow-sm overflow-x-auto">
+          <table className="w-full min-w-max">
             <thead>
               <tr className="text-right text-sm text-gray-500 border-b bg-gray-50">
                 <th className="px-5 py-3 font-semibold">الزبون</th>
                 <th className="px-5 py-3 font-semibold">الهاتف</th>
-                <th className="px-5 py-3 font-semibold">العنوان</th>
                 <th className="px-5 py-3 font-semibold">نوع الاشتراك</th>
+                <th className="px-5 py-3 font-semibold">تاريخ الشراء</th>
+                <th className="px-5 py-3 font-semibold">تاريخ التفعيل</th>
                 <th className="px-5 py-3 font-semibold">تاريخ الانتهاء</th>
                 <th className="px-5 py-3 font-semibold">الأيام</th>
                 <th className="px-5 py-3 font-semibold">الحالة</th>
@@ -57,9 +62,10 @@ export default function SubscriptionsPage() {
                   <tr key={sub.id} className="border-b hover:bg-gray-50 transition-colors">
                     <td className="px-5 py-4 font-medium text-gray-800">{sub.customer ? `${sub.customer.full_name} ${sub.customer.father_name} ${sub.customer.grandfather_name}` : '-'}</td>
                     <td className="px-5 py-4 text-gray-500">{sub.customer?.phone}</td>
-                    <td className="px-5 py-4 text-gray-500 text-sm">{sub.customer?.address}</td>
                     <td className="px-5 py-4"><span className="badge bg-blue-50 text-blue-700">{getSubscriptionLabel(sub.subscription_type as SubscriptionType)}</span></td>
-                    <td className="px-5 py-4 text-gray-500">{formatDate(sub.subscription_end)}</td>
+                    <td className="px-5 py-4 text-gray-500 text-sm">{sub.created_at ? formatDate(sub.created_at) : '-'}</td>
+                    <td className="px-5 py-4 text-sm font-medium" style={{ color: '#16a34a' }}>{sub.activation_date ? formatDate(sub.activation_date) : '-'}</td>
+                    <td className="px-5 py-4 text-sm font-medium" style={{ color: '#dc2626' }}>{formatDate(sub.subscription_end)}</td>
                     <td className="px-5 py-4 font-bold" style={{ color: days < 0 ? '#dc2626' : days < 30 ? '#d97706' : '#16a34a' }}>{days < 0 ? `${Math.abs(days)}-` : days}</td>
                     <td className="px-5 py-4"><span className={`badge ${getStatusColor(status)}`}>{getStatusLabel(status)}</span></td>
                   </tr>

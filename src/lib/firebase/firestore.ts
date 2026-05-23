@@ -1,5 +1,5 @@
 import {
-  collection, doc, addDoc, updateDoc, getDocs, getDoc,
+  collection, doc, addDoc, updateDoc, getDocs, getDoc, setDoc,
   query, where, orderBy, Timestamp, serverTimestamp
 } from 'firebase/firestore'
 import { db } from './config'
@@ -42,6 +42,8 @@ export async function createDeviceRequest(data: {
   employee_id: string
   purchase_type: string
   subscription_type: string | null
+  invoice_photo_url?: string
+  price?: number
 }) {
   const ref = await addDoc(collection(db, 'device_requests'), {
     ...data,
@@ -67,11 +69,14 @@ export async function getPendingRequests() {
   }))
 }
 
-export async function deliverRequest(requestId: string, adminId: string, subscriptionType: string | null) {
+export async function deliverRequest(requestId: string, adminId: string, subscriptionType: string | null, activationDate: string | null) {
   let subEnd = null
-  if (subscriptionType) {
+  let subStart = null
+  if (subscriptionType && activationDate) {
     const days = subscriptionType === '3_months' ? 90 : subscriptionType === '6_months' ? 180 : 365
-    const end = new Date()
+    const start = new Date(activationDate)
+    subStart = Timestamp.fromDate(start)
+    const end = new Date(activationDate)
     end.setDate(end.getDate() + days)
     subEnd = Timestamp.fromDate(end)
   }
@@ -79,7 +84,8 @@ export async function deliverRequest(requestId: string, adminId: string, subscri
     status: 'delivered',
     admin_id: adminId,
     delivered_at: serverTimestamp(),
-    subscription_start: serverTimestamp(),
+    activation_date: subStart,
+    subscription_start: subStart,
     subscription_end: subEnd,
     subscription_status: 'active',
   })
@@ -95,6 +101,8 @@ export async function getDeliveredSubscriptions() {
     const custSnap = await getDoc(doc(db, 'customers', req.customer_id as string))
     return {
       ...req,
+      created_at: req.created_at ? (req.created_at as Timestamp).toDate().toISOString() : null,
+      activation_date: req.activation_date ? (req.activation_date as Timestamp).toDate().toISOString() : null,
       subscription_end: (req.subscription_end as Timestamp).toDate().toISOString(),
       customer: custSnap.exists() ? { id: custSnap.id, ...custSnap.data() } : null,
     }
@@ -175,6 +183,17 @@ export async function updateMaintenanceStatus(id: string, status: string, notes:
     admin_notes: notes,
     resolved_at: status === 'completed' ? serverTimestamp() : null,
   })
+}
+
+// ---- إعدادات الأسعار ----
+export async function getSubscriptionPrices(): Promise<{ '3_months': number; '6_months': number; yearly: number }> {
+  const snap = await getDoc(doc(db, 'settings', 'subscription_prices'))
+  if (snap.exists()) return snap.data() as { '3_months': number; '6_months': number; yearly: number }
+  return { '3_months': 0, '6_months': 0, yearly: 0 }
+}
+
+export async function saveSubscriptionPrices(prices: { '3_months': number; '6_months': number; yearly: number }) {
+  await setDoc(doc(db, 'settings', 'subscription_prices'), prices)
 }
 
 // ---- إحصائيات الداشبورد ----

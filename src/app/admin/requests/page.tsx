@@ -1,13 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { auth } from '@/lib/firebase/config'
 import { getPendingRequests, deliverRequest } from '@/lib/firebase/firestore'
 import { formatDate, getSubscriptionLabel } from '@/lib/utils'
 import { SubscriptionType } from '@/types'
 
 interface Request {
-  id: string; purchase_type: string; subscription_type: string | null; status: string; created_at: { seconds: number } | string
+  id: string; purchase_type: string; subscription_type: string | null; status: string
+  created_at: { seconds: number } | string; price?: number; invoice_photo_url?: string
   customer: { full_name: string; father_name: string; grandfather_name: string; phone: string; address: string; id_card_front_url: string; id_card_back_url: string; residence_card_front_url: string; residence_card_back_url: string } | null
   employee: { full_name: string } | null
 }
@@ -17,6 +18,8 @@ export default function RequestsPage() {
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<Request | null>(null)
   const [delivering, setDelivering] = useState(false)
+  const [activationDate, setActivationDate] = useState('')
+  const printRef = useRef<HTMLDivElement>(null)
 
   async function load() {
     const data = await getPendingRequests()
@@ -26,13 +29,72 @@ export default function RequestsPage() {
   useEffect(() => { load() }, [])
 
   async function handleDeliver(req: Request) {
+    if (req.subscription_type && !activationDate) {
+      alert('يرجى إدخال تاريخ التفعيل أولاً')
+      return
+    }
     setDelivering(true)
     const user = auth.currentUser
-    await deliverRequest(req.id, user?.uid || '', req.subscription_type)
-    window.print()
+    await deliverRequest(req.id, user?.uid || '', req.subscription_type, activationDate || null)
+    handlePrint(req)
     setSelected(null)
+    setActivationDate('')
     setDelivering(false)
     load()
+  }
+
+  function handlePrint(req: Request) {
+    const customerName = req.customer ? `${req.customer.full_name} ${req.customer.father_name} ${req.customer.grandfather_name}` : '-'
+    const subLabel = req.subscription_type ? getSubscriptionLabel(req.subscription_type as SubscriptionType) : 'لا يوجد'
+    const purchaseDate = formatDate(typeof req.created_at === 'string' ? req.created_at : new Date((req.created_at as { seconds: number }).seconds * 1000).toISOString())
+    const actDate = activationDate ? new Date(activationDate).toLocaleDateString('ar-IQ') : '-'
+    const expDate = activationDate && req.subscription_type ? (() => {
+      const days = req.subscription_type === '3_months' ? 90 : req.subscription_type === '6_months' ? 180 : 365
+      const d = new Date(activationDate); d.setDate(d.getDate() + days)
+      return d.toLocaleDateString('ar-IQ')
+    })() : '-'
+    const price = req.price ? req.price.toLocaleString() + ' د.ع' : '-'
+
+    const invoiceCopy = `
+      <div style="width:210mm;min-height:148mm;padding:20mm;box-sizing:border-box;font-family:Arial,sans-serif;direction:rtl;border:2px solid #1a3a5c;border-radius:8px;">
+        <div style="text-align:center;border-bottom:2px solid #c9a84c;padding-bottom:12px;margin-bottom:16px;">
+          <h2 style="color:#1a3a5c;margin:0;font-size:20px;">شركة الأماني لخدمات GPS</h2>
+          <p style="color:#c9a84c;margin:4px 0 0;font-size:13px;">فاتورة شراء جهاز تتبع</p>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <tr><td style="padding:6px 8px;color:#555;width:40%">اسم الزبون:</td><td style="padding:6px 8px;font-weight:bold;color:#1a3a5c">${customerName}</td></tr>
+          <tr style="background:#f8f9fa"><td style="padding:6px 8px;color:#555">رقم الهاتف:</td><td style="padding:6px 8px;font-weight:bold">${req.customer?.phone || '-'}</td></tr>
+          <tr><td style="padding:6px 8px;color:#555">العنوان:</td><td style="padding:6px 8px">${req.customer?.address || '-'}</td></tr>
+          <tr style="background:#f8f9fa"><td style="padding:6px 8px;color:#555">نوع الاشتراك:</td><td style="padding:6px 8px;font-weight:bold">${subLabel}</td></tr>
+          <tr><td style="padding:6px 8px;color:#555">المبلغ المدفوع:</td><td style="padding:6px 8px;font-weight:bold;color:#c9a84c;font-size:15px">${price}</td></tr>
+          <tr style="background:#f8f9fa"><td style="padding:6px 8px;color:#555">تاريخ الشراء:</td><td style="padding:6px 8px">${purchaseDate}</td></tr>
+          <tr><td style="padding:6px 8px;color:#555">تاريخ التفعيل:</td><td style="padding:6px 8px;font-weight:bold;color:#16a34a">${actDate}</td></tr>
+          <tr style="background:#f8f9fa"><td style="padding:6px 8px;color:#555">تاريخ الانتهاء:</td><td style="padding:6px 8px;font-weight:bold;color:#dc2626">${expDate}</td></tr>
+        </table>
+        <div style="margin-top:24px;display:flex;justify-content:space-between;font-size:12px;color:#888;border-top:1px solid #eee;padding-top:12px;">
+          <span>توقيع الزبون: _______________</span>
+          <span>توقيع الموظف: _______________</span>
+        </div>
+      </div>
+    `
+
+    const win = window.open('', '_blank')
+    if (!win) return
+    win.document.write(`
+      <html><head><title>فاتورة</title>
+      <style>
+        @page { size: A4; margin: 10mm; }
+        body { margin: 0; display: flex; flex-direction: column; gap: 10mm; align-items: center; }
+        @media print { body { display: block; } }
+      </style></head>
+      <body>
+        ${invoiceCopy}
+        <div style="border-top:2px dashed #aaa;width:100%;margin:5mm 0;"></div>
+        ${invoiceCopy}
+        <script>window.onload = function(){ window.print(); window.close(); }</script>
+      </body></html>
+    `)
+    win.document.close()
   }
 
   function getDate(val: { seconds: number } | string) {
@@ -67,7 +129,7 @@ export default function RequestsPage() {
                   <span>📅 {getDate(req.created_at)}</span>
                 </div>
               </div>
-              <button onClick={() => setSelected(req)} className="btn-secondary text-sm px-4 py-2 mr-4 w-auto">مراجعة ←</button>
+              <button onClick={() => { setSelected(req); setActivationDate('') }} className="btn-secondary text-sm px-4 py-2 mr-4 w-auto">مراجعة ←</button>
             </div>
           ))}
         </div>
@@ -81,21 +143,47 @@ export default function RequestsPage() {
               <button onClick={() => setSelected(null)} className="text-gray-400 hover:text-gray-600 text-2xl">✕</button>
             </div>
             <div className="p-6 space-y-6">
-              <div className="text-center border-b pb-4">
-                <h3 className="text-2xl font-bold" style={{ color: '#1a3a5c' }}>شركة الأماني لخدمات GPS</h3>
-                <p className="text-gray-500 text-sm mt-1">فاتورة شراء جهاز</p>
-              </div>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <InfoRow label="الاسم الكامل" value={`${selected.customer?.full_name} ${selected.customer?.father_name} ${selected.customer?.grandfather_name}`} />
                 <InfoRow label="رقم الهاتف" value={selected.customer?.phone || '-'} />
                 <InfoRow label="العنوان" value={selected.customer?.address || '-'} />
                 <InfoRow label="نوع الشراء" value={typeLabel(selected.purchase_type)} />
                 {selected.subscription_type && <InfoRow label="نوع الاشتراك" value={getSubscriptionLabel(selected.subscription_type as SubscriptionType)} />}
+                {selected.price ? <InfoRow label="المبلغ" value={`${selected.price.toLocaleString()} د.ع`} /> : null}
                 <InfoRow label="تاريخ الطلب" value={getDate(selected.created_at)} />
               </div>
+
+              {selected.subscription_type && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                  <label className="block text-sm font-bold text-blue-800 mb-2">📅 تاريخ التفعيل (مطلوب) *</label>
+                  <input
+                    type="date"
+                    className="input-field"
+                    value={activationDate}
+                    onChange={e => setActivationDate(e.target.value)}
+                  />
+                  {activationDate && (
+                    <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                      <div className="bg-white rounded-lg p-2 text-center">
+                        <div className="text-xs text-gray-500">تاريخ التفعيل</div>
+                        <div className="font-bold text-green-700">{new Date(activationDate).toLocaleDateString('ar-IQ')}</div>
+                      </div>
+                      <div className="bg-white rounded-lg p-2 text-center">
+                        <div className="text-xs text-gray-500">تاريخ الانتهاء</div>
+                        <div className="font-bold text-red-600">{(() => {
+                          const days = selected.subscription_type === '3_months' ? 90 : selected.subscription_type === '6_months' ? 180 : 365
+                          const d = new Date(activationDate); d.setDate(d.getDate() + days)
+                          return d.toLocaleDateString('ar-IQ')
+                        })()}</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {selected.customer?.id_card_front_url && (
                 <div>
-                  <h4 className="font-semibold mb-3" style={{ color: '#1a3a5c' }}>المستندات</h4>
+                  <h4 className="font-semibold mb-3" style={{ color: '#1a3a5c' }}>وثائق الهوية</h4>
                   <div className="grid grid-cols-2 gap-3">
                     {selected.customer.id_card_front_url && <DocImage url={selected.customer.id_card_front_url} label="الهوية - أمامي" />}
                     {selected.customer.id_card_back_url && <DocImage url={selected.customer.id_card_back_url} label="الهوية - خلفي" />}
@@ -104,16 +192,24 @@ export default function RequestsPage() {
                   </div>
                 </div>
               )}
+
+              {selected.invoice_photo_url && (
+                <div>
+                  <h4 className="font-semibold mb-3" style={{ color: '#1a3a5c' }}>صورة الفاتورة</h4>
+                  <img src={selected.invoice_photo_url} alt="الفاتورة" className="w-full max-h-64 object-contain rounded-xl border" />
+                </div>
+              )}
             </div>
             <div className="sticky bottom-0 bg-white border-t p-5 flex gap-3">
               <button onClick={() => handleDeliver(selected)} disabled={delivering} className="btn-primary flex-1">
-                {delivering ? 'جارٍ التسليم...' : '✅ تسليم وطباعة الفاتورتين'}
+                {delivering ? 'جارٍ التسليم...' : '✅ تسليم وطباعة فاتورتين'}
               </button>
               <button onClick={() => setSelected(null)} className="px-6 py-3 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium">إغلاق</button>
             </div>
           </div>
         </div>
       )}
+      <div ref={printRef} />
     </div>
   )
 }
