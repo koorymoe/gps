@@ -69,7 +69,7 @@ export async function getPendingRequests() {
   }))
 }
 
-export async function deliverRequest(requestId: string, adminId: string, subscriptionType: string | null, activationDate: string | null) {
+export async function deliverRequest(requestId: string, adminId: string, subscriptionType: string | null, activationDate: string | null, deviceChecks?: { checked: boolean; activated: boolean; delivered: boolean }) {
   let subEnd = null
   let subStart = null
   if (subscriptionType && activationDate) {
@@ -88,6 +88,7 @@ export async function deliverRequest(requestId: string, adminId: string, subscri
     subscription_start: subStart,
     subscription_end: subEnd,
     subscription_status: 'active',
+    ...(deviceChecks ? { device_checked: deviceChecks.checked, device_activated: deviceChecks.activated, device_delivered: deviceChecks.delivered } : {}),
   })
 }
 
@@ -151,6 +152,7 @@ export async function createMaintenanceRequest(data: {
   customer_id: string
   employee_id: string
   problem_description: string
+  problem_type?: string
 }) {
   const ref = await addDoc(collection(db, 'maintenance_requests'), {
     ...data,
@@ -194,6 +196,69 @@ export async function getSubscriptionPrices(): Promise<{ '3_months': number; '6_
 
 export async function saveSubscriptionPrices(prices: { '3_months': number; '6_months': number; yearly: number }) {
   await setDoc(doc(db, 'settings', 'subscription_prices'), prices)
+}
+
+// ---- طلبات الموظف ----
+export async function getMyDeviceRequests(employeeId: string) {
+  const snap = await getDocs(query(collection(db, 'device_requests'), where('employee_id', '==', employeeId)))
+  const requests = snap.docs.map(d => ({ id: d.id, ...(d.data() as Record<string, unknown>) })) as Array<{ id: string } & Record<string, unknown>>
+  return Promise.all(requests.map(async (req) => {
+    const custSnap = await getDoc(doc(db, 'customers', req.customer_id as string))
+    return {
+      ...req,
+      created_at: req.created_at ? (req.created_at as Timestamp).toDate().toISOString() : null,
+      customer: custSnap.exists() ? { id: custSnap.id, ...custSnap.data() } : null,
+    }
+  }))
+}
+
+// ---- طلبات تجديد الاشتراك ----
+export async function createRenewalRequest(data: {
+  customer_id: string
+  original_request_id: string
+  employee_id: string
+  subscription_type: string
+  current_end: string
+}) {
+  const ref = await addDoc(collection(db, 'renewal_requests'), {
+    ...data,
+    status: 'pending',
+    created_at: serverTimestamp(),
+  })
+  return ref.id
+}
+
+export async function getPendingRenewals() {
+  const snap = await getDocs(query(collection(db, 'renewal_requests'), where('status', '==', 'pending')))
+  const requests = snap.docs.map(d => ({ id: d.id, ...(d.data() as Record<string, unknown>) })) as Array<{ id: string } & Record<string, unknown>>
+  return Promise.all(requests.map(async (req) => {
+    const custSnap = await getDoc(doc(db, 'customers', req.customer_id as string))
+    return {
+      ...req,
+      created_at: req.created_at ? (req.created_at as Timestamp).toDate().toISOString() : null,
+      customer: custSnap.exists() ? { id: custSnap.id, ...custSnap.data() } : null,
+    }
+  }))
+}
+
+export async function approveRenewal(renewalId: string, originalRequestId: string, adminId: string, subscriptionType: string, currentEnd: string) {
+  const days = subscriptionType === '3_months' ? 90 : subscriptionType === '6_months' ? 180 : 365
+  const now = new Date()
+  const end = new Date(currentEnd)
+  const startFrom = end > now ? end : now
+  const newEnd = new Date(startFrom)
+  newEnd.setDate(newEnd.getDate() + days)
+  await updateDoc(doc(db, 'renewal_requests', renewalId), {
+    status: 'delivered',
+    admin_id: adminId,
+    approved_at: serverTimestamp(),
+    new_subscription_end: Timestamp.fromDate(newEnd),
+  })
+  await updateDoc(doc(db, 'device_requests', originalRequestId), {
+    subscription_type: subscriptionType,
+    subscription_end: Timestamp.fromDate(newEnd),
+    subscription_status: 'active',
+  })
 }
 
 // ---- إحصائيات الداشبورد ----
