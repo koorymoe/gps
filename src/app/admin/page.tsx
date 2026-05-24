@@ -2,21 +2,21 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getDeliveredSubscriptions, getDashboardStats } from '@/lib/firebase/firestore'
+import { getDeliveredSubscriptions, getDashboardStats, searchActivatedRequests } from '@/lib/firebase/firestore'
 import { getSubscriptionStatus, getStatusLabel, getStatusColor, getRemainingDays, formatDate } from '@/lib/utils'
 
 interface SubData { id: string; subscription_end: string; subscription_type: string; customer: { full_name: string; father_name: string; phone: string } | null }
-interface Stats { active: number; expiring: number; exp40: number; exp80: number; pending: number; monthTotal: number }
+interface Stats { active: number; expiring: number; exp40: number; exp80: number; pending: number; monthTotal: number; activated: number }
 
 export default function AdminDashboard() {
   const router = useRouter()
-  const [stats, setStats] = useState<Stats>({ active: 0, expiring: 0, exp40: 0, exp80: 0, pending: 0, monthTotal: 0 })
+  const [stats, setStats] = useState<Stats>({ active: 0, expiring: 0, exp40: 0, exp80: 0, pending: 0, monthTotal: 0, activated: 0 })
   const [subs, setSubs] = useState<SubData[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
-      const [delivered, dashStats] = await Promise.all([getDeliveredSubscriptions(), getDashboardStats()])
+      const [delivered, dashStats, activatedList] = await Promise.all([getDeliveredSubscriptions(), getDashboardStats(), searchActivatedRequests('')])
       let active = 0, expiring = 0, exp40 = 0, exp80 = 0
       const subsData: SubData[] = []
       delivered.forEach((d: unknown) => {
@@ -28,7 +28,7 @@ export default function AdminDashboard() {
         else if (st === 'expired_80') exp80++
         subsData.push({ id: item.id, subscription_end: item.subscription_end, subscription_type: item.subscription_type, customer: item.customer })
       })
-      setStats({ active, expiring, exp40, exp80, pending: dashStats.pending, monthTotal: dashStats.total })
+      setStats({ active, expiring, exp40, exp80, pending: dashStats.pending, monthTotal: dashStats.total, activated: activatedList.length })
       setSubs(subsData.sort((a, b) => getRemainingDays(a.subscription_end) - getRemainingDays(b.subscription_end)))
       setLoading(false)
     }

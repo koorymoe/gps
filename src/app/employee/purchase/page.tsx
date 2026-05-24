@@ -21,6 +21,7 @@ export default function PurchasePage() {
   const [form, setForm] = useState({
     full_name: '', father_name: '', grandfather_name: '',
     phone: '', address: '', subscription_type: '3_months' as SubscriptionType,
+    gps_number: '', residence_card_number: '',
   })
 
   const [files, setFiles] = useState({
@@ -84,6 +85,8 @@ export default function PurchasePage() {
         subscription_type: purchaseType === 'device_sim' ? form.subscription_type : null,
         invoice_photo_url: invoiceUrl,
         price,
+        gps_number: form.gps_number,
+        residence_card_number: form.residence_card_number,
       })
 
       setSuccess(true)
@@ -95,7 +98,7 @@ export default function PurchasePage() {
 
   function resetForm() {
     setSuccess(false); setStep('select_type')
-    setForm({ full_name: '', father_name: '', grandfather_name: '', phone: '', address: '', subscription_type: '3_months' })
+    setForm({ full_name: '', father_name: '', grandfather_name: '', phone: '', address: '', subscription_type: '3_months', gps_number: '', residence_card_number: '' })
     setFiles({ id_card_front: null, id_card_back: null, residence_card_front: null, residence_card_back: null, invoice_photo: null })
     setPreviews({ id_card_front: '', id_card_back: '', residence_card_front: '', residence_card_back: '', invoice_photo: '' })
   }
@@ -161,6 +164,16 @@ export default function PurchasePage() {
               <div>
                 <label className="label">العنوان *</label>
                 <input className="input-field" value={form.address} onChange={e => setForm(p => ({ ...p, address: e.target.value }))} required placeholder="المحافظة / المنطقة / الشارع" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 mt-4">
+              <div>
+                <label className="label">رقم الجهاز (GPS/IMEI) *</label>
+                <input className="input-field" value={form.gps_number} onChange={e => setForm(p => ({ ...p, gps_number: e.target.value }))} required placeholder="رقم IMEI أو رقم الجهاز" />
+              </div>
+              <div>
+                <label className="label">رقم بطاقة السكن *</label>
+                <input className="input-field" value={form.residence_card_number} onChange={e => setForm(p => ({ ...p, residence_card_number: e.target.value }))} required placeholder="رقم بطاقة السكن" />
               </div>
             </div>
           </div>

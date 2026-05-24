@@ -44,7 +44,6 @@ export default function RequestsPage() {
     const user = auth.currentUser
     const checks = req.purchase_type === 'device_only' ? deviceChecks : undefined
     await deliverRequest(req.id, user?.uid || '', req.subscription_type, activationDate || null, checks)
-    handlePrint(req)
     setSelected(null)
     setActivationDate('')
     setDeviceChecks({ checked: false, activated: false, delivered: false })
@@ -244,7 +243,7 @@ export default function RequestsPage() {
                 disabled={delivering || (selected.purchase_type === 'device_only' && (!deviceChecks.checked || !deviceChecks.activated || !deviceChecks.delivered))}
                 className="btn-primary flex-1"
               >
-                {delivering ? 'جارٍ التسليم...' : '✅ تسليم وطباعة فاتورتين'}
+                {delivering ? 'جارٍ التفعيل...' : 'تفعيل الجهاز ✅'}
               </button>
               <button onClick={() => setSelected(null)} className="px-6 py-3 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium">إغلاق</button>
             </div>

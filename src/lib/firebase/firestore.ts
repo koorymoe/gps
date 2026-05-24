@@ -44,6 +44,8 @@ export async function createDeviceRequest(data: {
   subscription_type: string | null
   invoice_photo_url?: string
   price?: number
+  gps_number?: string
+  residence_card_number?: string
 }) {
   const ref = await addDoc(collection(db, 'device_requests'), {
     ...data,
@@ -81,7 +83,7 @@ export async function deliverRequest(requestId: string, adminId: string, subscri
     subEnd = Timestamp.fromDate(end)
   }
   await updateDoc(doc(db, 'device_requests', requestId), {
-    status: 'delivered',
+    status: 'activated',
     admin_id: adminId,
     delivered_at: serverTimestamp(),
     activation_date: subStart,
@@ -92,9 +94,46 @@ export async function deliverRequest(requestId: string, adminId: string, subscri
   })
 }
 
+export async function deliverToCustomer(requestId: string, employeeId: string) {
+  await updateDoc(doc(db, 'device_requests', requestId), {
+    status: 'delivered',
+    delivered_to_customer_at: serverTimestamp(),
+    delivered_by_employee: employeeId,
+  })
+}
+
+export async function searchActivatedRequests(search: string) {
+  // fetch all 'activated' status requests
+  const snap = await getDocs(query(collection(db, 'device_requests'), where('status', '==', 'activated')))
+  const requests = snap.docs.map(d => ({ id: d.id, ...(d.data() as Record<string, unknown>) })) as Array<{ id: string } & Record<string, unknown>>
+
+  const results = []
+  for (const req of requests) {
+    const custSnap = await getDoc(doc(db, 'customers', req.customer_id as string))
+    if (!custSnap.exists()) continue
+    const c = custSnap.data()
+    const fullName = `${c.full_name} ${c.father_name} ${c.grandfather_name}`.toLowerCase()
+    const gpsNum = String(req.gps_number || '').toLowerCase()
+    const s = search.toLowerCase()
+    if (fullName.includes(s) || String(c.phone).includes(search) || gpsNum.includes(s)) {
+      results.push({
+        ...req,
+        activation_date: req.activation_date ? (req.activation_date as import('firebase/firestore').Timestamp).toDate().toISOString() : null,
+        subscription_end: req.subscription_end ? (req.subscription_end as import('firebase/firestore').Timestamp).toDate().toISOString() : null,
+        customer: { id: custSnap.id, ...c },
+      })
+    }
+  }
+  return results
+}
+
 export async function getDeliveredSubscriptions() {
-  const snap = await getDocs(query(collection(db, 'device_requests'), where('status', '==', 'delivered')))
-  const requests = (snap.docs
+  const [activatedSnap, deliveredSnap] = await Promise.all([
+    getDocs(query(collection(db, 'device_requests'), where('status', '==', 'activated'))),
+    getDocs(query(collection(db, 'device_requests'), where('status', '==', 'delivered'))),
+  ])
+  const allDocs = [...activatedSnap.docs, ...deliveredSnap.docs]
+  const requests = (allDocs
     .map(d => ({ id: d.id, ...(d.data() as Record<string, unknown>) })) as Array<{ id: string } & Record<string, unknown>>)
     .filter(r => r.subscription_end)
 
