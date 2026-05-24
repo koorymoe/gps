@@ -5,7 +5,7 @@
   --primary-dark: #0f2540;
   --secondary: #c9a84c;
   --secondary-light: #e8c96a;
-  --bg: #f0f4f8;
+  --bg: #eef2f7;
 }
 
 body {
@@ -53,13 +53,14 @@ body {
   border-radius: 1rem;
   box-shadow: 0 4px 24px rgba(0,0,0,0.07);
   padding: 2rem;
+  border: 1px solid #e8edf4;
 }
 
 .input-field {
   width: 100%;
   padding: 0.75rem 1rem;
   border: 1.5px solid #e2e8f0;
-  border-radius: 0.5rem;
+  border-radius: 0.625rem;
   font-size: 0.95rem;
   transition: border-color 0.2s;
   background: white;
@@ -107,4 +108,14 @@ body {
 
 .stat-card:hover {
   transform: translateY(-2px);
+}
+
+.status-badge-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge-delivered {
+  background: #d1fae5;
+  color: #065f46;
 }

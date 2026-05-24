@@ -22,6 +22,7 @@ const adminLinks = [
 const employeeLinks = [
   { href: '/employee', label: 'الرئيسية', icon: '🏠' },
   { href: '/employee/purchase', label: 'شراء جهاز', icon: '🛒' },
+  { href: '/employee/renewal', label: 'تجديد اشتراك', icon: '🔄' },
   { href: '/employee/maintenance', label: 'صيانة', icon: '🔧' },
 ]
 

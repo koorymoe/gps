@@ -20,6 +20,7 @@ export default function RequestsPage() {
   const [selected, setSelected] = useState<Request | null>(null)
   const [delivering, setDelivering] = useState(false)
   const [activationDate, setActivationDate] = useState('')
+  const [deviceChecks, setDeviceChecks] = useState({ checked: false, activated: false, delivered: false })
   const printRef = useRef<HTMLDivElement>(null)
 
   async function load() {
@@ -30,16 +31,23 @@ export default function RequestsPage() {
   useEffect(() => { load() }, [])
 
   async function handleDeliver(req: Request) {
-    if (req.subscription_type && !activationDate) {
+    if (req.purchase_type === 'device_only') {
+      if (!deviceChecks.checked || !deviceChecks.activated || !deviceChecks.delivered) {
+        alert('يرجى تأكيد جميع الخطوات أولاً')
+        return
+      }
+    } else if (req.subscription_type && !activationDate) {
       alert('يرجى إدخال تاريخ التفعيل أولاً')
       return
     }
     setDelivering(true)
     const user = auth.currentUser
-    await deliverRequest(req.id, user?.uid || '', req.subscription_type, activationDate || null)
+    const checks = req.purchase_type === 'device_only' ? deviceChecks : undefined
+    await deliverRequest(req.id, user?.uid || '', req.subscription_type, activationDate || null, checks)
     handlePrint(req)
     setSelected(null)
     setActivationDate('')
+    setDeviceChecks({ checked: false, activated: false, delivered: false })
     setDelivering(false)
     load()
   }
@@ -140,7 +148,7 @@ export default function RequestsPage() {
                   <span>📅 {getDate(req.created_at)}</span>
                 </div>
               </div>
-              <button onClick={() => { setSelected(req); setActivationDate('') }} className="btn-secondary text-sm px-4 py-2 mr-4 w-auto">مراجعة ←</button>
+              <button onClick={() => { setSelected(req); setActivationDate(''); setDeviceChecks({ checked: false, activated: false, delivered: false }) }} className="btn-secondary text-sm px-4 py-2 mr-4 w-auto">مراجعة ←</button>
             </div>
           ))}
         </div>
@@ -164,7 +172,26 @@ export default function RequestsPage() {
                 <InfoRow label="تاريخ الطلب" value={getDate(selected.created_at)} />
               </div>
 
-              {selected.subscription_type && (
+              {selected.purchase_type === 'device_only' ? (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4 space-y-3">
+                  <p className="text-sm font-bold text-green-800 mb-3">تأكيد تسليم الجهاز</p>
+                  {[
+                    { key: 'checked', label: '✅ تم فحص الجهاز' },
+                    { key: 'activated', label: '✅ تم تفعيل الجهاز' },
+                    { key: 'delivered', label: '✅ تم تسليم الجهاز' },
+                  ].map(({ key, label }) => (
+                    <label key={key} className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={deviceChecks[key as keyof typeof deviceChecks]}
+                        onChange={e => setDeviceChecks(prev => ({ ...prev, [key]: e.target.checked }))}
+                        className="w-5 h-5 rounded"
+                      />
+                      <span className="text-sm font-medium text-gray-700">{label}</span>
+                    </label>
+                  ))}
+                </div>
+              ) : selected.subscription_type ? (
                 <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
                   <label className="block text-sm font-bold text-blue-800 mb-2">📅 تاريخ التفعيل (مطلوب) *</label>
                   <input
@@ -190,7 +217,7 @@ export default function RequestsPage() {
                     </div>
                   )}
                 </div>
-              )}
+              ) : null}
 
               {selected.customer?.id_card_front_url && (
                 <div>
@@ -212,7 +239,11 @@ export default function RequestsPage() {
               )}
             </div>
             <div className="sticky bottom-0 bg-white border-t p-5 flex gap-3">
-              <button onClick={() => handleDeliver(selected)} disabled={delivering} className="btn-primary flex-1">
+              <button
+                onClick={() => handleDeliver(selected)}
+                disabled={delivering || (selected.purchase_type === 'device_only' && (!deviceChecks.checked || !deviceChecks.activated || !deviceChecks.delivered))}
+                className="btn-primary flex-1"
+              >
                 {delivering ? 'جارٍ التسليم...' : '✅ تسليم وطباعة فاتورتين'}
               </button>
               <button onClick={() => setSelected(null)} className="px-6 py-3 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium">إغلاق</button>

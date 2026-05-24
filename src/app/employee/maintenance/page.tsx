@@ -10,7 +10,7 @@ export default function MaintenancePage() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
-  const [form, setForm] = useState({ full_name: '', father_name: '', grandfather_name: '', phone: '', address: '', problem_description: '' })
+  const [form, setForm] = useState({ full_name: '', father_name: '', grandfather_name: '', phone: '', address: '', problem_type: 'delay_activation', problem_description: '' })
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -27,7 +27,7 @@ export default function MaintenancePage() {
         residence_card_front_url: '', residence_card_back_url: '',
       })
 
-      await createMaintenanceRequest({ customer_id: customerId, employee_id: user.uid, problem_description: form.problem_description })
+      await createMaintenanceRequest({ customer_id: customerId, employee_id: user.uid, problem_type: form.problem_type, problem_description: form.problem_description })
       setSuccess(true)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'حدث خطأ')
@@ -43,7 +43,7 @@ export default function MaintenancePage() {
         <p className="text-gray-500 mb-6">سيتم مراجعته من قبل الموظف الإداري</p>
         <div className="flex gap-3">
           <button onClick={() => router.push('/employee')} className="btn-primary">الرئيسية</button>
-          <button onClick={() => { setSuccess(false); setForm({ full_name: '', father_name: '', grandfather_name: '', phone: '', address: '', problem_description: '' }) }} className="btn-secondary">طلب جديد</button>
+          <button onClick={() => { setSuccess(false); setForm({ full_name: '', father_name: '', grandfather_name: '', phone: '', address: '', problem_type: 'delay_activation', problem_description: '' }) }} className="btn-secondary">طلب جديد</button>
         </div>
       </div>
     )
@@ -79,7 +79,21 @@ export default function MaintenancePage() {
         </div>
         <div className="card">
           <h3 className="text-lg font-bold mb-5" style={{ color: '#1a3a5c' }}>وصف المشكلة</h3>
-          <textarea className="input-field" rows={5} value={form.problem_description} onChange={e => setForm(p => ({ ...p, problem_description: e.target.value }))} required placeholder="اكتب وصفاً تفصيلياً للمشكلة..." />
+          <div className="mb-4">
+            <label className="label">نوع المشكلة *</label>
+            <select className="input-field" value={form.problem_type} onChange={e => setForm(p => ({ ...p, problem_type: e.target.value }))} required>
+              <option value="delay_activation">تأخير في التفعيل</option>
+              <option value="device_malfunction">عطل في الجهاز</option>
+              <option value="device_broken">كسر في الجهاز</option>
+              <option value="signal_loss">انقطاع الإشارة</option>
+              <option value="device_lost">ضياع الجهاز</option>
+              <option value="other">أخرى</option>
+            </select>
+          </div>
+          <div>
+            <label className="label">تفاصيل إضافية (اختياري)</label>
+            <textarea className="input-field" rows={4} value={form.problem_description} onChange={e => setForm(p => ({ ...p, problem_description: e.target.value }))} placeholder="أي تفاصيل إضافية..." />
+          </div>
         </div>
         {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm text-center">{error}</div>}
         <button type="submit" className="btn-primary" disabled={loading}>{loading ? 'جارٍ الإرسال...' : 'إرسال طلب الصيانة ←'}</button>
