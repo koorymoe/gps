@@ -5,6 +5,7 @@ import { auth } from '@/lib/firebase/config'
 import { getPendingRequests, deliverRequest } from '@/lib/firebase/firestore'
 import { formatDate, getSubscriptionLabel } from '@/lib/utils'
 import { SubscriptionType } from '@/types'
+import { IMG_VSTRIP, IMG_FBANNER } from '@/lib/companyFormImages'
 
 interface Request {
   id: string; purchase_type: string; subscription_type: string | null; status: string
@@ -55,25 +56,35 @@ export default function RequestsPage() {
     })() : '-'
     const price = req.price ? req.price.toLocaleString() + ' د.ع' : '-'
 
-    const invoiceCopy = `
-      <div style="width:210mm;min-height:148mm;padding:20mm;box-sizing:border-box;font-family:Arial,sans-serif;direction:rtl;border:2px solid #1a3a5c;border-radius:8px;">
-        <div style="text-align:center;border-bottom:2px solid #c9a84c;padding-bottom:12px;margin-bottom:16px;">
-          <h2 style="color:#1a3a5c;margin:0;font-size:20px;">شركة الأماني لخدمات GPS</h2>
-          <p style="color:#c9a84c;margin:4px 0 0;font-size:13px;">فاتورة شراء جهاز تتبع</p>
-        </div>
-        <table style="width:100%;border-collapse:collapse;font-size:13px;">
-          <tr><td style="padding:6px 8px;color:#555;width:40%">اسم الزبون:</td><td style="padding:6px 8px;font-weight:bold;color:#1a3a5c">${customerName}</td></tr>
-          <tr style="background:#f8f9fa"><td style="padding:6px 8px;color:#555">رقم الهاتف:</td><td style="padding:6px 8px;font-weight:bold">${req.customer?.phone || '-'}</td></tr>
-          <tr><td style="padding:6px 8px;color:#555">العنوان:</td><td style="padding:6px 8px">${req.customer?.address || '-'}</td></tr>
-          <tr style="background:#f8f9fa"><td style="padding:6px 8px;color:#555">نوع الاشتراك:</td><td style="padding:6px 8px;font-weight:bold">${subLabel}</td></tr>
-          <tr><td style="padding:6px 8px;color:#555">المبلغ المدفوع:</td><td style="padding:6px 8px;font-weight:bold;color:#c9a84c;font-size:15px">${price}</td></tr>
-          <tr style="background:#f8f9fa"><td style="padding:6px 8px;color:#555">تاريخ الشراء:</td><td style="padding:6px 8px">${purchaseDate}</td></tr>
-          <tr><td style="padding:6px 8px;color:#555">تاريخ التفعيل:</td><td style="padding:6px 8px;font-weight:bold;color:#16a34a">${actDate}</td></tr>
-          <tr style="background:#f8f9fa"><td style="padding:6px 8px;color:#555">تاريخ الانتهاء:</td><td style="padding:6px 8px;font-weight:bold;color:#dc2626">${expDate}</td></tr>
-        </table>
-        <div style="margin-top:24px;display:flex;justify-content:space-between;font-size:12px;color:#888;border-top:1px solid #eee;padding-top:12px;">
-          <span>توقيع الزبون: _______________</span>
-          <span>توقيع الموظف: _______________</span>
+    const makeCopy = (copyLabel: string) => `
+      <div style="width:190mm;min-height:130mm;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif;direction:rtl;border:1.5px solid #b8974a;border-radius:6px;overflow:hidden;display:flex;flex-direction:column;">
+        <!-- header banner -->
+        <img src="${IMG_FBANNER}" style="width:100%;height:auto;display:block;" />
+        <!-- body -->
+        <div style="display:flex;flex:1;">
+          <!-- content -->
+          <div style="flex:1;padding:10px 14px 10px 8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <span style="font-size:11px;color:#888;">نسخة: ${copyLabel}</span>
+              <span style="font-size:10px;color:#aaa;">رقم الطلب: ${req.id.slice(-6).toUpperCase()}</span>
+            </div>
+            <table style="width:100%;border-collapse:collapse;font-size:12px;">
+              <tr><td style="padding:4px 6px;color:#444;width:38%;border-bottom:1px solid #f0e8d0;">اسم الزبون</td><td style="padding:4px 6px;font-weight:bold;color:#1a3a5c;border-bottom:1px solid #f0e8d0;">${customerName}</td></tr>
+              <tr style="background:#fffdf5;"><td style="padding:4px 6px;color:#444;border-bottom:1px solid #f0e8d0;">رقم الهاتف</td><td style="padding:4px 6px;font-weight:bold;border-bottom:1px solid #f0e8d0;">${req.customer?.phone || '-'}</td></tr>
+              <tr><td style="padding:4px 6px;color:#444;border-bottom:1px solid #f0e8d0;">العنوان</td><td style="padding:4px 6px;border-bottom:1px solid #f0e8d0;">${req.customer?.address || '-'}</td></tr>
+              <tr style="background:#fffdf5;"><td style="padding:4px 6px;color:#444;border-bottom:1px solid #f0e8d0;">نوع الاشتراك</td><td style="padding:4px 6px;font-weight:bold;border-bottom:1px solid #f0e8d0;">${subLabel}</td></tr>
+              <tr><td style="padding:4px 6px;color:#444;border-bottom:1px solid #f0e8d0;">المبلغ المدفوع</td><td style="padding:4px 6px;font-weight:bold;color:#b8974a;font-size:14px;border-bottom:1px solid #f0e8d0;">${price}</td></tr>
+              <tr style="background:#fffdf5;"><td style="padding:4px 6px;color:#444;border-bottom:1px solid #f0e8d0;">تاريخ الشراء</td><td style="padding:4px 6px;border-bottom:1px solid #f0e8d0;">${purchaseDate}</td></tr>
+              <tr><td style="padding:4px 6px;color:#444;border-bottom:1px solid #f0e8d0;">تاريخ التفعيل</td><td style="padding:4px 6px;font-weight:bold;color:#16a34a;border-bottom:1px solid #f0e8d0;">${actDate}</td></tr>
+              <tr style="background:#fffdf5;"><td style="padding:4px 6px;color:#444;">تاريخ الانتهاء</td><td style="padding:4px 6px;font-weight:bold;color:#dc2626;">${expDate}</td></tr>
+            </table>
+            <div style="margin-top:12px;display:flex;justify-content:space-between;font-size:11px;color:#999;border-top:1px solid #f0e8d0;padding-top:8px;">
+              <span>توقيع الزبون: _______________</span>
+              <span>توقيع المسؤول: _______________</span>
+            </div>
+          </div>
+          <!-- vertical strip -->
+          <img src="${IMG_VSTRIP}" style="width:22px;height:auto;display:block;object-fit:cover;" />
         </div>
       </div>
     `
@@ -83,14 +94,14 @@ export default function RequestsPage() {
     win.document.write(`
       <html><head><title>فاتورة</title>
       <style>
-        @page { size: A4; margin: 10mm; }
-        body { margin: 0; display: flex; flex-direction: column; gap: 10mm; align-items: center; }
-        @media print { body { display: block; } }
+        @page { size: A4 portrait; margin: 8mm; }
+        body { margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8mm; align-items: center; background: white; }
+        @media print { body { display: block; } .page-break { page-break-after: avoid; } }
       </style></head>
       <body>
-        ${invoiceCopy}
-        <div style="border-top:2px dashed #aaa;width:100%;margin:5mm 0;"></div>
-        ${invoiceCopy}
+        ${makeCopy('الزبون')}
+        <div style="border-top:2px dashed #ccc;width:100%;margin:2mm 0;"></div>
+        ${makeCopy('الشركة')}
         <script>window.onload = function(){ window.print(); window.close(); }</script>
       </body></html>
     `)
