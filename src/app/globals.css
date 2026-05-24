@@ -32,6 +32,11 @@ body {
   box-shadow: 0 6px 20px rgba(26, 58, 92, 0.4);
 }
 
+.btn-inline {
+  width: auto !important;
+  flex-shrink: 0;
+}
+
 .btn-secondary {
   background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
   color: var(--primary-dark);

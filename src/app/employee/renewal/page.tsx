@@ -76,8 +76,9 @@ export default function EmployeeRenewalPage() {
             onChange={e => setSearch(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSearch()}
             placeholder="اسم الزبون أو رقم الهاتف..."
+            style={{ minWidth: 0 }}
           />
-          <button onClick={handleSearch} className="btn-secondary px-6 py-2 w-auto" disabled={loading}>
+          <button onClick={handleSearch} className="btn-secondary" style={{ width: 'auto', flexShrink: 0, padding: '0.75rem 2rem' }} disabled={loading}>
             {loading ? '...' : 'بحث'}
           </button>
         </div>

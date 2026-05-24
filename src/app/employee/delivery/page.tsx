@@ -145,11 +145,13 @@ export default function DeliveryPage() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSearch()}
+            style={{ minWidth: 0 }}
           />
           <button
             onClick={handleSearch}
             disabled={loading}
-            className="btn-primary w-auto px-6"
+            className="btn-primary"
+            style={{ width: 'auto', flexShrink: 0, padding: '0.75rem 2rem' }}
           >
             {loading ? 'جارٍ البحث...' : 'بحث'}
           </button>
