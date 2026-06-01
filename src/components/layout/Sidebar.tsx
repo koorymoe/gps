@@ -16,6 +16,8 @@ const adminLinks = [
   { href: '/admin/maintenance', label: 'الصيانة', icon: '🔧' },
   { href: '/admin/customers', label: 'الزبائن', icon: '👥' },
   { href: '/admin/employees', label: 'الموظفين', icon: '🧑‍💼' },
+  { href: '/admin/sims', label: 'SIM كارتات', icon: '📱' },
+  { href: '/admin/legacy', label: 'زبائن قدامى', icon: '📂' },
   { href: '/admin/settings', label: 'الإعدادات', icon: '⚙️' },
 ]
 

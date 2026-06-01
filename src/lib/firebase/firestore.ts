@@ -300,6 +300,96 @@ export async function approveRenewal(renewalId: string, originalRequestId: strin
   })
 }
 
+// ---- SIM كارتات ----
+export async function getAllSimCards() {
+  const snap = await getDocs(collection(db, 'sim_cards'))
+  return snap.docs.map(d => ({ id: d.id, ...(d.data() as Record<string, unknown>) }))
+}
+
+export async function addSimCard(data: { sim_number: string; iccid?: string; operator: string; notes?: string }) {
+  const ref = await addDoc(collection(db, 'sim_cards'), {
+    ...data,
+    status: 'available',
+    current_customer_name: null,
+    current_request_id: null,
+    created_at: serverTimestamp(),
+  })
+  return ref.id
+}
+
+export async function assignSimCard(simId: string, customerName: string, requestId: string) {
+  await updateDoc(doc(db, 'sim_cards', simId), {
+    status: 'in_use',
+    current_customer_name: customerName,
+    current_request_id: requestId,
+  })
+}
+
+export async function releaseSimCard(simId: string) {
+  await updateDoc(doc(db, 'sim_cards', simId), {
+    status: 'available',
+    current_customer_name: null,
+    current_request_id: null,
+  })
+}
+
+export async function updateSimCard(simId: string, data: { sim_number?: string; iccid?: string; operator?: string; notes?: string }) {
+  await updateDoc(doc(db, 'sim_cards', simId), data)
+}
+
+// ---- زبائن قدامى ----
+export async function addLegacyCustomer(data: {
+  full_name: string
+  father_name: string
+  grandfather_name: string
+  phone: string
+  address: string
+  gps_number: string
+  sim_number?: string
+  subscription_type: string
+  activation_date: string
+  subscription_end: string
+  notes?: string
+}) {
+  // Create customer
+  const custRef = await addDoc(collection(db, 'customers'), {
+    full_name: data.full_name,
+    father_name: data.father_name,
+    grandfather_name: data.grandfather_name,
+    phone: data.phone,
+    address: data.address,
+    id_card_front_url: '',
+    id_card_back_url: '',
+    residence_card_front_url: '',
+    residence_card_back_url: '',
+    created_at: serverTimestamp(),
+  })
+
+  // Create device request as already delivered
+  const start = new Date(data.activation_date)
+  const end = new Date(data.subscription_end)
+
+  await addDoc(collection(db, 'device_requests'), {
+    customer_id: custRef.id,
+    employee_id: 'legacy',
+    purchase_type: 'device_sim',
+    subscription_type: data.subscription_type,
+    gps_number: data.gps_number,
+    sim_number: data.sim_number || '',
+    status: 'delivered',
+    activation_date: Timestamp.fromDate(start),
+    subscription_start: Timestamp.fromDate(start),
+    subscription_end: Timestamp.fromDate(end),
+    subscription_status: 'active',
+    notes: data.notes || 'زبون قديم - مضاف يدوياً',
+    is_legacy: true,
+    created_at: serverTimestamp(),
+    delivered_at: serverTimestamp(),
+  })
+
+  return custRef.id
+}
+
 // ---- إحصائيات الداشبورد ----
 export async function getDashboardStats() {
   const [pendingSnap, allSnap, monthSnap] = await Promise.all([
