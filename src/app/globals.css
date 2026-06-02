@@ -124,3 +124,9 @@ body {
   background: #d1fae5;
   color: #065f46;
 }
+
+@media (max-width: 1024px) {
+  .card { padding: 1rem; border-radius: 0.75rem; }
+  .btn-primary, .btn-secondary { padding: 0.875rem 1.5rem; font-size: 1rem; }
+  .input-field { padding: 0.875rem 1rem; font-size: 1rem; border-radius: 0.75rem; }
+}
