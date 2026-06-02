@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import * as XLSX from 'xlsx'
 import { getAllSimCards, addSimCard, releaseSimCard, updateSimCard } from '@/lib/firebase/firestore'
 
 interface SimCard {
@@ -18,6 +19,8 @@ const OPERATORS = ['زين', 'آسياسيل', 'كورك', 'أخرى']
 
 const emptyForm = { sim_number: '', iccid: '', operator: 'زين', notes: '' }
 
+interface BulkSimRow { sim_number: string; iccid: string; operator: string; notes: string; _status?: 'pending'|'success'|'error' }
+
 export default function SimsPage() {
   const [sims, setSims] = useState<SimCard[]>([])
   const [loading, setLoading] = useState(true)
@@ -27,6 +30,10 @@ export default function SimsPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [bulkRows, setBulkRows] = useState<BulkSimRow[]>([])
+  const [bulkUploading, setBulkUploading] = useState(false)
+  const [bulkDone, setBulkDone] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   async function load() {
     setLoading(true)
@@ -83,6 +90,60 @@ export default function SimsPage() {
     setError('')
   }
 
+  function downloadSimTemplate() {
+    const headers = ['رقم الخط *','رقم الشريحة ICCID','المشغل (زين/آسياسيل/كورك/أخرى)','ملاحظات']
+    const example = ['07901234567','8964XXXXXXXXX','زين','']
+    const ws = XLSX.utils.aoa_to_sheet([headers, example])
+    ws['!cols'] = headers.map(() => ({ wch: 25 }))
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'SIM كارتات')
+    XLSX.writeFile(wb, 'template_SIM_كارتات.xlsx')
+  }
+
+  function handleSimFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const data = new Uint8Array(ev.target?.result as ArrayBuffer)
+      const wb = XLSX.read(data, { type: 'array' })
+      const ws = wb.Sheets[wb.SheetNames[0]]
+      const rows = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1 }) as unknown[][]
+      const parsed: BulkSimRow[] = []
+      for (let i = 1; i < rows.length; i++) {
+        const r = rows[i] as unknown[]
+        if (!r || !r[0]) continue
+        parsed.push({
+          sim_number: String(r[0] || '').trim(),
+          iccid: String(r[1] || '').trim(),
+          operator: String(r[2] || 'زين').trim() || 'زين',
+          notes: String(r[3] || '').trim(),
+          _status: 'pending',
+        })
+      }
+      setBulkRows(parsed)
+      setBulkDone(false)
+    }
+    reader.readAsArrayBuffer(file)
+    e.target.value = ''
+  }
+
+  async function handleBulkSimUpload() {
+    setBulkUploading(true)
+    const updated = [...bulkRows]
+    for (let i = 0; i < updated.length; i++) {
+      if (updated[i]._status === 'success') continue
+      try {
+        await addSimCard({ sim_number: updated[i].sim_number, iccid: updated[i].iccid || undefined, operator: updated[i].operator, notes: updated[i].notes || undefined })
+        updated[i] = { ...updated[i], _status: 'success' }
+      } catch { updated[i] = { ...updated[i], _status: 'error' } }
+      setBulkRows([...updated])
+    }
+    setBulkUploading(false)
+    setBulkDone(true)
+    load()
+  }
+
   const total = sims.length
   const available = sims.filter(s => s.status === 'available').length
   const inUse = sims.filter(s => s.status === 'in_use').length
@@ -93,10 +154,15 @@ export default function SimsPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold" style={{ color: '#1a3a5c' }}>إدارة SIM كارتات 📱</h1>
-        <button onClick={() => { setShowAdd(true); setEditSim(null); setForm(emptyForm); setError('') }}
-          className="btn-secondary w-auto px-5 py-2.5 text-sm">
-          + إضافة SIM جديد
-        </button>
+        <div className="flex gap-2">
+          <button onClick={downloadSimTemplate} className="btn-secondary" style={{ width:'auto', padding:'0.6rem 1.2rem', fontSize:'0.85rem' }}>⬇️ Template Excel</button>
+          <button onClick={() => fileRef.current?.click()} className="btn-secondary" style={{ width:'auto', padding:'0.6rem 1.2rem', fontSize:'0.85rem' }}>📊 رفع Excel</button>
+          <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleSimFileUpload} />
+          <button onClick={() => { setShowAdd(true); setEditSim(null); setForm(emptyForm); setError('') }}
+            className="btn-secondary" style={{ width:'auto', padding:'0.6rem 1.2rem', fontSize:'0.85rem' }}>
+            + إضافة SIM
+          </button>
+        </div>
       </div>
 
       {/* إحصائيات */}
@@ -116,6 +182,42 @@ export default function SimsPage() {
       </div>
 
       {success && <div className="bg-green-50 border border-green-200 text-green-700 rounded-lg p-3 text-sm text-center mb-4">{success}</div>}
+
+      {bulkRows.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
+          <div className="flex items-center justify-between p-5 border-b">
+            <div>
+              <h3 className="font-bold" style={{ color: '#1a3a5c' }}>معاينة — {bulkRows.length} SIM كارت</h3>
+              {bulkDone && <p className="text-sm mt-1 text-green-700">تم: {bulkRows.filter(r=>r._status==='success').length} | فشل: {bulkRows.filter(r=>r._status==='error').length}</p>}
+            </div>
+            {!bulkDone && (
+              <button onClick={handleBulkSimUpload} disabled={bulkUploading} className="btn-primary" style={{ width:'auto', padding:'0.6rem 1.5rem' }}>
+                {bulkUploading ? `${bulkRows.filter(r=>r._status==='success').length}/${bulkRows.length} جارٍ...` : `✅ رفع ${bulkRows.length} SIM`}
+              </button>
+            )}
+          </div>
+          <table className="w-full text-sm">
+            <thead><tr className="bg-gray-50 text-right text-gray-500">
+              <th className="px-4 py-2">#</th><th className="px-4 py-2">رقم الخط</th><th className="px-4 py-2">ICCID</th><th className="px-4 py-2">المشغل</th><th className="px-4 py-2">الحالة</th>
+            </tr></thead>
+            <tbody>
+              {bulkRows.map((r, i) => (
+                <tr key={i} className="border-t" style={{ background: r._status==='success'?'#f0fdf4':r._status==='error'?'#fef2f2':'white' }}>
+                  <td className="px-4 py-2 text-gray-400">{i+1}</td>
+                  <td className="px-4 py-2 font-medium">{r.sim_number}</td>
+                  <td className="px-4 py-2 text-gray-500">{r.iccid||'-'}</td>
+                  <td className="px-4 py-2 text-gray-500">{r.operator}</td>
+                  <td className="px-4 py-2">
+                    {r._status==='success'&&<span className="badge bg-green-50 text-green-700">✅ تم</span>}
+                    {r._status==='error'&&<span className="badge bg-red-50 text-red-700">❌ فشل</span>}
+                    {r._status==='pending'&&<span className="badge bg-gray-100 text-gray-500">انتظار</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Modal إضافة / تعديل */}
       {isModalOpen && (
