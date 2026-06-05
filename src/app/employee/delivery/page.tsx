@@ -76,33 +76,57 @@ export default function DeliveryPage() {
     const residenceNum = req.residence_card_number || '-'
 
     const makeCopy = (copyLabel: string) => `
-      <div style="width:190mm;min-height:140mm;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif;direction:rtl;border:1.5px solid #b8974a;border-radius:6px;overflow:hidden;display:flex;flex-direction:column;">
+      <div style="width:185mm;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Arial,sans-serif;direction:rtl;border:2px solid #b8974a;border-radius:8px;overflow:hidden;">
         <img src="${IMG_FBANNER}" style="width:100%;height:auto;display:block;" />
-        <div style="display:flex;flex:1;">
-          <div style="flex:1;padding:10px 14px 10px 8px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-              <h2 style="font-size:14px;font-weight:bold;color:#1a3a5c;margin:0;">استمارة تسليم جهاز GPS</h2>
-              <div style="text-align:left;">
-                <span style="font-size:11px;color:#888;">نسخة: ${copyLabel}</span><br/>
-                <span style="font-size:10px;color:#aaa;">رقم الطلب: ${req.id.slice(-6).toUpperCase()}</span>
+        <div style="display:flex;">
+          <div style="flex:1;padding:14px 18px 14px 10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #e8c96a;">
+              <h2 style="font-size:15px;font-weight:bold;color:#1a3a5c;margin:0;">استمارة تسليم جهاز GPS</h2>
+              <div style="text-align:left;background:#f5f0e8;padding:4px 10px;border-radius:4px;">
+                <div style="font-size:11px;color:#666;">نسخة: <strong>${copyLabel}</strong></div>
+                <div style="font-size:10px;color:#999;">رقم الطلب: ${req.id.slice(-6).toUpperCase()}</div>
               </div>
             </div>
-            <table style="width:100%;border-collapse:collapse;font-size:12px;">
-              <tr><td style="padding:4px 6px;color:#444;width:38%;border-bottom:1px solid #f0e8d0;">اسم الزبون</td><td style="padding:4px 6px;font-weight:bold;color:#1a3a5c;border-bottom:1px solid #f0e8d0;">${customerName}</td></tr>
-              <tr style="background:#fffdf5;"><td style="padding:4px 6px;color:#444;border-bottom:1px solid #f0e8d0;">رقم الهاتف</td><td style="padding:4px 6px;font-weight:bold;border-bottom:1px solid #f0e8d0;">${req.customer?.phone || '-'}</td></tr>
-              <tr><td style="padding:4px 6px;color:#444;border-bottom:1px solid #f0e8d0;">العنوان</td><td style="padding:4px 6px;border-bottom:1px solid #f0e8d0;">${req.customer?.address || '-'}</td></tr>
-              <tr style="background:#fffdf5;"><td style="padding:4px 6px;color:#444;border-bottom:1px solid #f0e8d0;">رقم الجهاز</td><td style="padding:4px 6px;font-weight:bold;border-bottom:1px solid #f0e8d0;">${gpsNum}</td></tr>
-              <tr><td style="padding:4px 6px;color:#444;border-bottom:1px solid #f0e8d0;">رقم بطاقة السكن</td><td style="padding:4px 6px;border-bottom:1px solid #f0e8d0;">${residenceNum}</td></tr>
-              <tr style="background:#fffdf5;"><td style="padding:4px 6px;color:#444;border-bottom:1px solid #f0e8d0;">نوع الاشتراك</td><td style="padding:4px 6px;font-weight:bold;border-bottom:1px solid #f0e8d0;">${subLabel}</td></tr>
-              <tr><td style="padding:4px 6px;color:#444;border-bottom:1px solid #f0e8d0;">تاريخ التفعيل</td><td style="padding:4px 6px;font-weight:bold;color:#16a34a;border-bottom:1px solid #f0e8d0;">${actDate}</td></tr>
-              <tr style="background:#fffdf5;"><td style="padding:4px 6px;color:#444;">تاريخ الانتهاء</td><td style="padding:4px 6px;font-weight:bold;color:#dc2626;">${expDate}</td></tr>
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+              <tr style="background:#f8f4ee;">
+                <td style="padding:7px 10px;color:#555;width:35%;font-weight:600;border:1px solid #e8d8b0;">اسم الزبون</td>
+                <td style="padding:7px 10px;font-weight:bold;color:#1a3a5c;border:1px solid #e8d8b0;">${customerName}</td>
+              </tr>
+              <tr>
+                <td style="padding:7px 10px;color:#555;font-weight:600;border:1px solid #e8d8b0;">رقم الهاتف</td>
+                <td style="padding:7px 10px;font-weight:bold;border:1px solid #e8d8b0;">${req.customer?.phone || '-'}</td>
+              </tr>
+              <tr style="background:#f8f4ee;">
+                <td style="padding:7px 10px;color:#555;font-weight:600;border:1px solid #e8d8b0;">العنوان</td>
+                <td style="padding:7px 10px;border:1px solid #e8d8b0;">${req.customer?.address || '-'}</td>
+              </tr>
+              <tr>
+                <td style="padding:7px 10px;color:#555;font-weight:600;border:1px solid #e8d8b0;">رقم الجهاز</td>
+                <td style="padding:7px 10px;font-weight:bold;color:#1a3a5c;border:1px solid #e8d8b0;">${gpsNum}</td>
+              </tr>
+              <tr style="background:#f8f4ee;">
+                <td style="padding:7px 10px;color:#555;font-weight:600;border:1px solid #e8d8b0;">رقم بطاقة السكن</td>
+                <td style="padding:7px 10px;border:1px solid #e8d8b0;">${residenceNum}</td>
+              </tr>
+              <tr>
+                <td style="padding:7px 10px;color:#555;font-weight:600;border:1px solid #e8d8b0;">نوع الاشتراك</td>
+                <td style="padding:7px 10px;font-weight:bold;border:1px solid #e8d8b0;">${subLabel}</td>
+              </tr>
+              <tr style="background:#f8f4ee;">
+                <td style="padding:7px 10px;color:#555;font-weight:600;border:1px solid #e8d8b0;">تاريخ التفعيل</td>
+                <td style="padding:7px 10px;font-weight:bold;color:#16a34a;border:1px solid #e8d8b0;">${actDate}</td>
+              </tr>
+              <tr>
+                <td style="padding:7px 10px;color:#555;font-weight:600;border:1px solid #e8d8b0;">تاريخ الانتهاء</td>
+                <td style="padding:7px 10px;font-weight:bold;color:#dc2626;border:1px solid #e8d8b0;">${expDate}</td>
+              </tr>
             </table>
-            <div style="margin-top:12px;display:flex;justify-content:space-between;font-size:11px;color:#999;border-top:1px solid #f0e8d0;padding-top:8px;">
-              <span>توقيع الزبون: _______________</span>
-              <span>توقيع الموظف: _______________</span>
+            <div style="margin-top:16px;display:flex;justify-content:space-between;font-size:12px;color:#666;border-top:1px dashed #c9a84c;padding-top:10px;">
+              <span>توقيع الزبون: _______________________</span>
+              <span>توقيع الموظف: _______________________</span>
             </div>
           </div>
-          <img src="${IMG_VSTRIP}" style="width:22px;height:auto;display:block;object-fit:cover;" />
+          <img src="${IMG_VSTRIP}" style="width:38px;display:block;object-fit:cover;object-position:center;" />
         </div>
       </div>
     `
@@ -112,13 +136,12 @@ export default function DeliveryPage() {
     win.document.write(`
       <html><head><title>استمارة تسليم جهاز GPS</title>
       <style>
-        @page { size: A4 portrait; margin: 8mm; }
-        body { margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8mm; align-items: center; background: white; }
-        @media print { body { display: block; } }
+        @page { size: A4 portrait; margin: 10mm; }
+        body { margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10mm; align-items: center; background: white; }
       </style></head>
       <body>
         ${makeCopy('الزبون')}
-        <div style="border-top:2px dashed #ccc;width:100%;margin:2mm 0;"></div>
+        <div style="border-top:2px dashed #b8974a;width:100%;"></div>
         ${makeCopy('الشركة')}
         <script>window.onload = function(){ window.print(); window.close(); }<\/script>
       </body></html>
