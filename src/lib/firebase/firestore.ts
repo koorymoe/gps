@@ -149,7 +149,7 @@ export async function searchActivatedRequests(search: string) {
   return all.filter(req => {
     const c = req.customer as Record<string, unknown>
     const fullName = `${c.full_name} ${c.father_name} ${c.grandfather_name}`.toLowerCase()
-    return fullName.includes(s) || String(c.phone).includes(search) || String(req.gps_number || '').toLowerCase().includes(s)
+    return fullName.includes(s) || String(c.phone).includes(search) || String((req as Record<string, unknown>).gps_number || '').toLowerCase().includes(s)
   })
 }
 
