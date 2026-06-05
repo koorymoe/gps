@@ -102,29 +102,55 @@ export async function deliverToCustomer(requestId: string, employeeId: string) {
   })
 }
 
-export async function searchActivatedRequests(search: string) {
-  // fetch all 'activated' status requests
+export async function getAllActivatedRequests() {
   const snap = await getDocs(query(collection(db, 'device_requests'), where('status', '==', 'activated')))
   const requests = snap.docs.map(d => ({ id: d.id, ...(d.data() as Record<string, unknown>) })) as Array<{ id: string } & Record<string, unknown>>
-
   const results = []
   for (const req of requests) {
     const custSnap = await getDoc(doc(db, 'customers', req.customer_id as string))
     if (!custSnap.exists()) continue
     const c = custSnap.data()
-    const fullName = `${c.full_name} ${c.father_name} ${c.grandfather_name}`.toLowerCase()
-    const gpsNum = String(req.gps_number || '').toLowerCase()
-    const s = search.toLowerCase()
-    if (fullName.includes(s) || String(c.phone).includes(search) || gpsNum.includes(s)) {
-      results.push({
-        ...req,
-        activation_date: req.activation_date ? (req.activation_date as import('firebase/firestore').Timestamp).toDate().toISOString() : null,
-        subscription_end: req.subscription_end ? (req.subscription_end as import('firebase/firestore').Timestamp).toDate().toISOString() : null,
-        customer: { id: custSnap.id, ...c },
-      })
-    }
+    results.push({
+      ...req,
+      activation_date: req.activation_date ? (req.activation_date as Timestamp).toDate().toISOString() : null,
+      subscription_end: req.subscription_end ? (req.subscription_end as Timestamp).toDate().toISOString() : null,
+      customer: { id: custSnap.id, ...c },
+    })
   }
   return results
+}
+
+export async function getRecentlyDelivered() {
+  const snap = await getDocs(query(collection(db, 'device_requests'), where('status', '==', 'delivered')))
+  const requests = snap.docs.map(d => ({ id: d.id, ...(d.data() as Record<string, unknown>) })) as Array<{ id: string } & Record<string, unknown>>
+  const results = []
+  for (const req of requests) {
+    const custSnap = await getDoc(doc(db, 'customers', req.customer_id as string))
+    if (!custSnap.exists()) continue
+    const c = custSnap.data()
+    results.push({
+      ...req,
+      activation_date: req.activation_date ? (req.activation_date as Timestamp).toDate().toISOString() : null,
+      subscription_end: req.subscription_end ? (req.subscription_end as Timestamp).toDate().toISOString() : null,
+      delivered_to_customer_at: req.delivered_to_customer_at ? (req.delivered_to_customer_at as Timestamp).toDate().toISOString() : null,
+      customer: { id: custSnap.id, ...c },
+    })
+  }
+  return results.sort((a, b) => {
+    const aDate = a.delivered_to_customer_at as string | null
+    const bDate = b.delivered_to_customer_at as string | null
+    return (bDate || '').localeCompare(aDate || '')
+  }).slice(0, 20)
+}
+
+export async function searchActivatedRequests(search: string) {
+  const all = await getAllActivatedRequests()
+  const s = search.toLowerCase()
+  return all.filter(req => {
+    const c = req.customer as Record<string, unknown>
+    const fullName = `${c.full_name} ${c.father_name} ${c.grandfather_name}`.toLowerCase()
+    return fullName.includes(s) || String(c.phone).includes(search) || String(req.gps_number || '').toLowerCase().includes(s)
+  })
 }
 
 export async function getDeliveredSubscriptions() {

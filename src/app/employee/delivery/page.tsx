@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { auth } from '@/lib/firebase/config'
-import { searchActivatedRequests, deliverToCustomer } from '@/lib/firebase/firestore'
+import { getAllActivatedRequests, searchActivatedRequests, deliverToCustomer, getRecentlyDelivered } from '@/lib/firebase/firestore'
 import { IMG_FBANNER, IMG_VSTRIP } from '@/lib/companyFormImages'
 import { formatDate, getSubscriptionLabel } from '@/lib/utils'
 import { SubscriptionType } from '@/types'
@@ -14,6 +14,7 @@ interface ActivatedRequest {
   subscription_type?: string
   activation_date?: string | null
   subscription_end?: string | null
+  delivered_to_customer_at?: string | null
   customer: {
     id: string
     full_name: string
@@ -28,48 +29,66 @@ interface ActivatedRequest {
 export default function DeliveryPage() {
   const [search, setSearch] = useState('')
   const [results, setResults] = useState<ActivatedRequest[]>([])
-  const [loading, setLoading] = useState(false)
-  const [delivering, setDelivering] = useState(false)
-  const [success, setSuccess] = useState<string | null>(null)
+  const [delivered, setDelivered] = useState<ActivatedRequest[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searching, setSearching] = useState(false)
+  const [delivering, setDelivering] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const [tab, setTab] = useState<'pending' | 'delivered'>('pending')
 
-  async function handleSearch() {
-    if (!search.trim()) return
+  async function loadAll() {
     setLoading(true)
     setError('')
     try {
-      const data = await searchActivatedRequests(search.trim())
-      setResults(data as ActivatedRequest[])
-      if (data.length === 0) setError('لا توجد نتائج مطابقة للبحث')
+      const [pending, recent] = await Promise.all([
+        getAllActivatedRequests(),
+        getRecentlyDelivered(),
+      ])
+      setResults(pending as ActivatedRequest[])
+      setDelivered(recent as ActivatedRequest[])
     } catch {
-      setError('حدث خطأ أثناء البحث')
+      setError('حدث خطأ أثناء التحميل')
     }
     setLoading(false)
   }
 
+  useEffect(() => { loadAll() }, [])
+
+  async function handleSearch() {
+    if (!search.trim()) { loadAll(); return }
+    setSearching(true)
+    setError('')
+    try {
+      const data = await searchActivatedRequests(search.trim())
+      setResults(data as ActivatedRequest[])
+      if (data.length === 0) setError('لا توجد نتائج مطابقة')
+    } catch {
+      setError('حدث خطأ أثناء البحث')
+    }
+    setSearching(false)
+  }
+
   async function handleDeliver(req: ActivatedRequest) {
-    setDelivering(true)
+    setDelivering(req.id)
     setError('')
     try {
       const user = auth.currentUser
       if (!user) throw new Error('غير مسجل')
       await deliverToCustomer(req.id, user.uid)
       printInvoice(req)
-      setSuccess(req.id)
       setResults(prev => prev.filter(r => r.id !== req.id))
+      loadAll()
     } catch {
       setError('حدث خطأ أثناء التسليم')
     }
-    setDelivering(false)
+    setDelivering(null)
   }
 
   function printInvoice(req: ActivatedRequest) {
     const customerName = req.customer
       ? `${req.customer.full_name} ${req.customer.father_name} ${req.customer.grandfather_name}`
       : '-'
-    const subLabel = req.subscription_type
-      ? getSubscriptionLabel(req.subscription_type as SubscriptionType)
-      : 'لا يوجد'
+    const subLabel = req.subscription_type ? getSubscriptionLabel(req.subscription_type as SubscriptionType) : 'لا يوجد'
     const actDate = req.activation_date ? formatDate(req.activation_date) : '-'
     const expDate = req.subscription_end ? formatDate(req.subscription_end) : '-'
     const gpsNum = req.gps_number || '-'
@@ -149,73 +168,122 @@ export default function DeliveryPage() {
     win.document.close()
   }
 
+  const customerFullName = (req: ActivatedRequest) =>
+    req.customer ? `${req.customer.full_name} ${req.customer.father_name} ${req.customer.grandfather_name}` : '-'
+
   return (
     <div className="max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold mb-6" style={{ color: '#1a3a5c' }}>تسليم جهاز GPS 📦</h1>
 
-      {success && (
-        <div className="bg-green-50 border border-green-200 text-green-800 rounded-xl p-4 mb-4 text-center">
-          ✅ تم تسليم الجهاز وطباعة الاستمارة بنجاح
-        </div>
-      )}
-
-      <div className="card mb-6">
-        <h3 className="text-lg font-bold mb-4" style={{ color: '#1a3a5c' }}>البحث عن الجهاز المفعّل</h3>
-        <div className="flex gap-3">
-          <input
-            className="input-field flex-1"
-            placeholder="ابحث باسم الزبون أو رقم الهاتف أو رقم الجهاز..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSearch()}
-            style={{ minWidth: 0 }}
-          />
-          <button
-            onClick={handleSearch}
-            disabled={loading}
-            className="btn-primary"
-            style={{ width: 'auto', flexShrink: 0, padding: '0.75rem 2rem' }}
-          >
-            {loading ? 'جارٍ البحث...' : 'بحث'}
-          </button>
-        </div>
-        {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
+      {/* تبويبات */}
+      <div className="flex gap-2 mb-6">
+        <button
+          onClick={() => setTab('pending')}
+          className="px-5 py-2 rounded-xl font-semibold text-sm transition-all"
+          style={{ background: tab === 'pending' ? '#1a3a5c' : 'white', color: tab === 'pending' ? 'white' : '#1a3a5c', border: '2px solid #1a3a5c' }}
+        >
+          📦 بانتظار التسليم ({results.length})
+        </button>
+        <button
+          onClick={() => setTab('delivered')}
+          className="px-5 py-2 rounded-xl font-semibold text-sm transition-all"
+          style={{ background: tab === 'delivered' ? '#1a3a5c' : 'white', color: tab === 'delivered' ? 'white' : '#1a3a5c', border: '2px solid #1a3a5c' }}
+        >
+          ✅ تم التسليم مؤخراً ({delivered.length})
+        </button>
       </div>
 
-      {results.length > 0 && (
-        <div className="space-y-4">
-          {results.map(req => (
-            <div key={req.id} className="card">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <p className="font-bold text-gray-800 text-lg mb-1">
-                    {req.customer
-                      ? `${req.customer.full_name} ${req.customer.father_name} ${req.customer.grandfather_name}`
-                      : '-'}
-                  </p>
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-600 mt-2">
-                    <span>📞 {req.customer?.phone || '-'}</span>
-                    <span>📦 رقم الجهاز: <strong>{req.gps_number || '-'}</strong></span>
-                    <span>📋 نوع الاشتراك: {req.subscription_type ? getSubscriptionLabel(req.subscription_type as SubscriptionType) : '-'}</span>
-                    <span>🏠 رقم بطاقة السكن: {req.residence_card_number || '-'}</span>
-                    {req.activation_date && (
-                      <span style={{ color: '#16a34a' }}>✅ تاريخ التفعيل: {formatDate(req.activation_date)}</span>
-                    )}
-                    {req.subscription_end && (
-                      <span style={{ color: '#dc2626' }}>⏰ تاريخ الانتهاء: {formatDate(req.subscription_end)}</span>
-                    )}
+      {tab === 'pending' && (
+        <>
+          {/* البحث */}
+          <div className="card mb-4">
+            <div className="flex gap-3">
+              <input
+                className="input-field flex-1"
+                placeholder="ابحث باسم الزبون أو رقم الهاتف أو رقم الجهاز..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSearch()}
+                style={{ minWidth: 0 }}
+              />
+              <button onClick={handleSearch} disabled={searching} className="btn-secondary" style={{ width: 'auto', flexShrink: 0, padding: '0.75rem 1.5rem' }}>
+                {searching ? '...' : 'بحث'}
+              </button>
+              {search && (
+                <button onClick={() => { setSearch(''); loadAll() }} className="btn-secondary" style={{ width: 'auto', flexShrink: 0, padding: '0.75rem 1rem' }}>
+                  ✕
+                </button>
+              )}
+            </div>
+            {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
+          </div>
+
+          {loading ? (
+            <div className="text-center text-gray-400 py-20">جارٍ التحميل...</div>
+          ) : results.length === 0 ? (
+            <div className="text-center text-gray-400 py-20">لا توجد أجهزة بانتظار التسليم</div>
+          ) : (
+            <div className="space-y-4">
+              {results.map(req => (
+                <div key={req.id} className="card">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <p className="font-bold text-gray-800 text-lg mb-1">{customerFullName(req)}</p>
+                      <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-600 mt-2">
+                        <span>📞 {req.customer?.phone || '-'}</span>
+                        <span>📦 رقم الجهاز: <strong>{req.gps_number || '-'}</strong></span>
+                        <span>📋 {req.subscription_type ? getSubscriptionLabel(req.subscription_type as SubscriptionType) : '-'}</span>
+                        <span>🏠 {req.residence_card_number || '-'}</span>
+                        {req.activation_date && <span style={{ color: '#16a34a' }}>✅ {formatDate(req.activation_date)}</span>}
+                        {req.subscription_end && <span style={{ color: '#dc2626' }}>⏰ {formatDate(req.subscription_end)}</span>}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleDeliver(req)}
+                      disabled={delivering === req.id}
+                      className="btn-primary"
+                      style={{ width: 'auto', flexShrink: 0, padding: '0.6rem 1.2rem', fontSize: '0.85rem' }}
+                    >
+                      {delivering === req.id ? 'جارٍ...' : 'تسليم وطباعة 🖨️'}
+                    </button>
                   </div>
                 </div>
-                <button
-                  onClick={() => handleDeliver(req)}
-                  disabled={delivering}
-                  className="btn-primary w-auto px-4 py-2 text-sm whitespace-nowrap"
-                >
-                  {delivering ? 'جارٍ...' : 'تسليم الجهاز وطباعة الاستمارة 🖨️'}
-                </button>
-              </div>
+              ))}
             </div>
-          ))}
+          )}
+        </>
+      )}
+
+      {tab === 'delivered' && (
+        <div className="space-y-4">
+          {delivered.length === 0 ? (
+            <div className="text-center text-gray-400 py-20">لا توجد تسليمات مؤخراً</div>
+          ) : (
+            delivered.map(req => (
+              <div key={req.id} className="card">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <p className="font-bold text-gray-800 text-lg mb-1">{customerFullName(req)}</p>
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-600 mt-2">
+                      <span>📞 {req.customer?.phone || '-'}</span>
+                      <span>📦 رقم الجهاز: <strong>{req.gps_number || '-'}</strong></span>
+                      <span>📋 {req.subscription_type ? getSubscriptionLabel(req.subscription_type as SubscriptionType) : '-'}</span>
+                      {req.delivered_to_customer_at && (
+                        <span style={{ color: '#16a34a' }}>✅ سُلّم: {formatDate(req.delivered_to_customer_at as string)}</span>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => printInvoice(req)}
+                    className="btn-secondary"
+                    style={{ width: 'auto', flexShrink: 0, padding: '0.6rem 1.2rem', fontSize: '0.85rem' }}
+                  >
+                    🖨️ إعادة طباعة
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       )}
     </div>
