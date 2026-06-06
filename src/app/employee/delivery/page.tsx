@@ -121,9 +121,9 @@ export default function DeliveryPage() {
     `
 
     const makeCopy = (copyLabel: string) => `
-      <div style="width:100%;height:100%;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Arial,sans-serif;direction:rtl;background:white;">
-        <div style="border:2px solid #b8974a;border-radius:6px;overflow:hidden;height:100%;display:flex;flex-direction:column;">
-          <div style="display:flex;flex:1;overflow:hidden;">
+      <div style="width:100%;height:139mm;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Arial,sans-serif;direction:rtl;background:white;">
+        <div style="border:2px solid #b8974a;border-radius:6px;overflow:hidden;height:100%;display:flex;flex-direction:column;justify-content:space-between;">
+          <div style="display:flex;flex:1;overflow:hidden;min-height:0;">
             <div style="flex:1;padding:6px 12px 6px 6px;overflow:hidden;">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
                 <h2 style="font-size:12px;font-weight:bold;color:#1a3a5c;margin:0;">تعهد شراء جهاز GPS مع خط</h2>
@@ -206,16 +206,15 @@ export default function DeliveryPage() {
       <html><head><title>تعهد شراء جهاز GPS مع خط</title>
       <style>
         @page { size: A4 portrait; margin: 5mm; }
-        html, body { margin: 0; padding: 0; background: white; width: 200mm; height: 287mm; overflow: hidden; }
-        .page { width: 200mm; height: 287mm; overflow: hidden; display: flex; flex-direction: column; gap: 3mm; }
-        .copy { flex: 1; overflow: hidden; }
-        .divider { border: none; border-top: 2px dashed #b8974a; flex-shrink: 0; }
+        html, body { margin: 0; padding: 0; background: white; }
+        .page { width: 200mm; display: flex; flex-direction: column; gap: 3mm; }
+        .divider { border: none; border-top: 2px dashed #b8974a; margin: 0; }
       </style></head>
       <body>
         <div class="page">
-          <div class="copy">${makeCopy('الزبون')}</div>
+          ${makeCopy('الزبون')}
           <hr class="divider" />
-          <div class="copy">${makeCopy('الشركة')}</div>
+          ${makeCopy('الشركة')}
         </div>
         <script>window.onload = function(){ window.print(); window.close(); }<\/script>
       </body></html>
