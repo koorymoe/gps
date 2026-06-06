@@ -120,7 +120,6 @@ export default function DeliveryPage() {
     const makeCopy = (copyLabel: string) => `
       <div style="width:100%;height:100%;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Arial,sans-serif;direction:rtl;background:white;">
         <div style="border:2px solid #b8974a;border-radius:6px;overflow:hidden;height:100%;display:flex;flex-direction:column;">
-          <img src="${IMG_FBANNER}" style="width:100%;display:block;flex-shrink:0;" />
           <div style="display:flex;flex:1;overflow:hidden;">
             <div style="flex:1;padding:6px 12px 6px 6px;overflow:hidden;">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
@@ -193,6 +192,7 @@ export default function DeliveryPage() {
             </div>
             <img src="${IMG_VSTRIP}" style="width:32px;display:block;object-fit:cover;" />
           </div>
+          <img src="${IMG_FBANNER}" style="width:100%;display:block;flex-shrink:0;" />
         </div>
       </div>
     `
