@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getDeliveredSubscriptions, getAllSimCards } from '@/lib/firebase/firestore'
+import { getDeliveredSubscriptions, getAllSimCards, getTotalCustomers } from '@/lib/firebase/firestore'
 import { getSubscriptionStatus, getStatusLabel, getStatusColor, getRemainingDays, formatDate, getSubscriptionLabel } from '@/lib/utils'
 import { SubscriptionType } from '@/types'
 
@@ -30,15 +30,18 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<SubData | null>(null)
   const [subFilter, setSubFilter] = useState('all')
+  const [totalCustomers, setTotalCustomers] = useState<number | null>(null)
 
   useEffect(() => {
     async function load() {
-      const [delivered, samsData] = await Promise.all([
+      const [delivered, samsData, custCount] = await Promise.all([
         getDeliveredSubscriptions(),
         getAllSimCards(),
+        getTotalCustomers(),
       ])
       setSubs(delivered as SubData[])
       setSims(samsData as SimCard[])
+      setTotalCustomers(custCount)
       setLoading(false)
     }
     load()
@@ -86,8 +89,9 @@ export default function AdminDashboard() {
       {tab === 'overview' && (
         <div className="space-y-6">
           {/* Stats Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             {[
+              { label: 'إجمالي الزبائن', value: totalCustomers ?? 0, color: '#1a3a5c', bg: '#eff6ff', icon: '👥' },
               { label: 'اشتراكات نشطة', value: active, color: '#16a34a', bg: '#f0fdf4', icon: '✅' },
               { label: 'تنتهي قريباً', value: expiring, color: '#d97706', bg: '#fffbeb', icon: '⚠️' },
               { label: 'منتهية +40 يوم', value: exp40, color: '#ea580c', bg: '#fff7ed', icon: '🔔' },

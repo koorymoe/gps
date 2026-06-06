@@ -152,8 +152,8 @@ export default function CustomersPage() {
                 </th>
                 <th className="px-5 py-3 font-semibold">الاسم الكامل</th>
                 <th className="px-5 py-3 font-semibold">رقم الهاتف</th>
-                <th className="px-5 py-3 font-semibold">رقم GPS</th>
-                <th className="px-5 py-3 font-semibold">ID جهاز GPS</th>
+                <th className="px-5 py-3 font-semibold">رقم الشريحة</th>
+                <th className="px-5 py-3 font-semibold">رقم الجهاز</th>
                 <th className="px-5 py-3 font-semibold">تاريخ انتهاء الاشتراك</th>
                 <th className="px-5 py-3 font-semibold">الأيام المتبقية</th>
                 <th className="px-5 py-3 font-semibold">الحالة</th>

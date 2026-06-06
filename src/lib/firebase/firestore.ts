@@ -392,7 +392,7 @@ export async function approveRenewal(renewalId: string, originalRequestId: strin
   const newEnd = new Date(startFrom)
   newEnd.setDate(newEnd.getDate() + days)
   await updateDoc(doc(db, 'renewal_requests', renewalId), {
-    status: 'delivered',
+    status: 'approved',
     admin_id: adminId,
     approved_at: serverTimestamp(),
     new_subscription_end: Timestamp.fromDate(newEnd),
@@ -492,6 +492,29 @@ export async function addLegacyCustomer(data: {
   })
 
   return custRef.id
+}
+
+// ---- الإشعارات ----
+export async function getAdminNotifications() {
+  const [pendingReqs, pendingRenewals] = await Promise.all([
+    getDocs(query(collection(db, 'device_requests'), where('status', '==', 'pending'))),
+    getDocs(query(collection(db, 'renewal_requests'), where('status', '==', 'pending'))),
+  ])
+  return {
+    pendingRequests: pendingReqs.size,
+    pendingRenewals: pendingRenewals.size,
+    total: pendingReqs.size + pendingRenewals.size,
+  }
+}
+
+export async function getEmployeeNotifications(employeeId: string) {
+  const snap = await getDocs(query(collection(db, 'device_requests'), where('status', '==', 'activated'), where('employee_id', '==', employeeId)))
+  return { pendingDeliveries: snap.size }
+}
+
+export async function getTotalCustomers() {
+  const snap = await getDocs(collection(db, 'customers'))
+  return snap.size
 }
 
 // ---- إحصائيات الداشبورد ----

@@ -1,7 +1,10 @@
 'use client'
 
 import { useRouter, usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { logoutUser } from '@/lib/firebase/auth'
+import { getAdminNotifications, getEmployeeNotifications } from '@/lib/firebase/firestore'
+import { auth } from '@/lib/firebase/config'
 
 interface SidebarProps {
   role: 'admin' | 'employee'
@@ -10,9 +13,9 @@ interface SidebarProps {
 
 const adminLinks = [
   { href: '/admin', label: 'لوحة المراقبة', icon: '📊' },
-  { href: '/admin/requests', label: 'الطلبات المعلقة', icon: '📋' },
+  { href: '/admin/requests', label: 'الطلبات المعلقة', icon: '📋', notifyKey: 'adminRequests' },
   { href: '/admin/subscriptions', label: 'الاشتراكات', icon: '📡' },
-  { href: '/admin/renewals', label: 'تجديد اشتراك', icon: '🔄' },
+  { href: '/admin/renewals', label: 'تجديد اشتراك', icon: '🔄', notifyKey: 'adminRenewals' },
   { href: '/admin/maintenance', label: 'الصيانة', icon: '🔧' },
   { href: '/admin/customers', label: 'الزبائن', icon: '👥' },
   { href: '/admin/employees', label: 'الموظفين', icon: '🧑‍💼' },
@@ -24,7 +27,7 @@ const adminLinks = [
 const employeeLinks = [
   { href: '/employee', label: 'الرئيسية', icon: '🏠' },
   { href: '/employee/purchase', label: 'شراء جهاز', icon: '🛒' },
-  { href: '/employee/delivery', label: 'تسليم جهاز', icon: '📦' },
+  { href: '/employee/delivery', label: 'تسليم جهاز', icon: '📦', notifyKey: 'employeeDeliveries' },
   { href: '/employee/renewal', label: 'تجديد اشتراك', icon: '🔄' },
   { href: '/employee/maintenance', label: 'صيانة', icon: '🔧' },
 ]
@@ -33,6 +36,30 @@ export default function Sidebar({ role, userName }: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
   const links = role === 'admin' ? adminLinks : employeeLinks
+  const [badges, setBadges] = useState<Record<string, number>>({})
+
+  useEffect(() => {
+    async function loadNotifications() {
+      try {
+        if (role === 'admin') {
+          const n = await getAdminNotifications()
+          setBadges({
+            adminRequests: n.pendingRequests,
+            adminRenewals: n.pendingRenewals,
+          })
+        } else {
+          const user = auth.currentUser
+          if (user) {
+            const n = await getEmployeeNotifications(user.uid)
+            setBadges({ employeeDeliveries: n.pendingDeliveries })
+          }
+        }
+      } catch {
+        // ignore notification errors
+      }
+    }
+    loadNotifications()
+  }, [role])
 
   async function handleLogout() {
     await logoutUser()
@@ -75,6 +102,7 @@ export default function Sidebar({ role, userName }: SidebarProps) {
       <nav className="flex-1 p-3 mt-2 space-y-1">
         {links.map(link => {
           const isActive = pathname === link.href
+          const badgeCount = link.notifyKey ? (badges[link.notifyKey] || 0) : 0
           return (
             <button
               key={link.href}
@@ -87,7 +115,12 @@ export default function Sidebar({ role, userName }: SidebarProps) {
               }}
             >
               <span className="text-lg">{link.icon}</span>
-              <span>{link.label}</span>
+              <span className="flex-1 text-right">{link.label}</span>
+              {badgeCount > 0 && (
+                <span className="flex-shrink-0 min-w-[20px] h-5 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center px-1">
+                  {badgeCount}
+                </span>
+              )}
             </button>
           )
         })}

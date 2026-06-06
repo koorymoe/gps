@@ -20,7 +20,7 @@ export default function PurchasePage() {
 
   const [form, setForm] = useState({
     full_name: '', father_name: '', grandfather_name: '',
-    phone: '', address: '', subscription_type: '3_months' as SubscriptionType,
+    phone: '', address: '', subscription_type: '' as SubscriptionType | '',
     gps_number: '', residence_card_number: '',
   })
 
@@ -48,6 +48,16 @@ export default function PurchasePage() {
     setLoading(true)
     setError('')
 
+    if (form.phone.length !== 11) {
+      setError('رقم الهاتف يجب أن يكون 11 رقماً')
+      setLoading(false)
+      return
+    }
+    if (purchaseType === 'device_sim' && !form.subscription_type) {
+      setError('يرجى اختيار نوع الاشتراك')
+      setLoading(false)
+      return
+    }
     if (purchaseType === 'device_sim' && (!files.id_card_front || !files.id_card_back || !files.residence_card_front || !files.residence_card_back)) {
       setError('يرجى رفع جميع صور الوثائق المطلوبة')
       setLoading(false)
@@ -77,12 +87,12 @@ export default function PurchasePage() {
         residence_card_front_url: resF, residence_card_back_url: resB,
       })
 
-      const price = purchaseType === 'device_sim' ? prices[form.subscription_type] : 0
+      const price = purchaseType === 'device_sim' && form.subscription_type ? prices[form.subscription_type as SubscriptionType] : 0
 
       await createDeviceRequest({
         customer_id: customerId, employee_id: user.uid,
         purchase_type: purchaseType,
-        subscription_type: purchaseType === 'device_sim' ? form.subscription_type : null,
+        subscription_type: purchaseType === 'device_sim' && form.subscription_type ? form.subscription_type as SubscriptionType : null,
         invoice_photo_url: invoiceUrl,
         price,
         gps_number: form.gps_number,
@@ -98,7 +108,7 @@ export default function PurchasePage() {
 
   function resetForm() {
     setSuccess(false); setStep('select_type')
-    setForm({ full_name: '', father_name: '', grandfather_name: '', phone: '', address: '', subscription_type: '3_months', gps_number: '', residence_card_number: '' })
+    setForm({ full_name: '', father_name: '', grandfather_name: '', phone: '', address: '', subscription_type: '', gps_number: '', residence_card_number: '' })
     setFiles({ id_card_front: null, id_card_back: null, residence_card_front: null, residence_card_back: null, invoice_photo: null })
     setPreviews({ id_card_front: '', id_card_back: '', residence_card_front: '', residence_card_back: '', invoice_photo: '' })
   }
@@ -244,7 +254,7 @@ function FileUpload({ label, preview, onChange }: { label: string; preview: stri
           ? <img src={preview} alt={label} className="max-h-28 rounded-lg object-contain" />
           : <div className="text-gray-400"><div className="text-3xl mb-2">📷</div><p className="text-xs">اضغط لرفع الصورة</p></div>}
       </div>
-      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={e => onChange(e.target.files?.[0] || null)} />
+      <input ref={inputRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={e => onChange(e.target.files?.[0] || null)} />
     </div>
   )
 }
