@@ -17,7 +17,7 @@ export default function EmployeesPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-  const [form, setForm] = useState({ full_name: '', email: '', password: '', role: 'employee' })
+  const [form, setForm] = useState({ full_name: '', username: '', password: '', role: 'employee' })
 
   async function loadEmployees() {
     const res = await fetch('/api/employees')
@@ -37,7 +37,7 @@ export default function EmployeesPage() {
     const res = await fetch('/api/employees', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, email: `${form.username.trim()}@alamani.iq` }),
     })
     const data = await res.json()
 
@@ -45,7 +45,7 @@ export default function EmployeesPage() {
       setError(data.error.includes('email-already-exists') ? 'البريد الإلكتروني مستخدم مسبقاً' : data.error)
     } else {
       setSuccess('تم إضافة الموظف بنجاح!')
-      setForm({ full_name: '', email: '', password: '', role: 'employee' })
+      setForm({ full_name: '', username: '', password: '', role: 'employee' })
       setShowForm(false)
       loadEmployees()
     }
@@ -91,8 +91,11 @@ export default function EmployeesPage() {
                 <input className="input-field" value={form.full_name} onChange={e => setForm(p => ({ ...p, full_name: e.target.value }))} required placeholder="محمد أحمد" />
               </div>
               <div>
-                <label className="label">البريد الإلكتروني *</label>
-                <input type="email" className="input-field" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} required placeholder="employee@alamani.iq" />
+                <label className="label">اسم المستخدم *</label>
+                <div className="flex gap-2 items-center">
+                  <input type="text" className="input-field flex-1" value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value }))} required placeholder="ali_hassan" />
+                  <span className="text-gray-400 text-sm whitespace-nowrap">@alamani.iq</span>
+                </div>
               </div>
               <div>
                 <label className="label">كلمة المرور *</label>
@@ -129,7 +132,7 @@ export default function EmployeesPage() {
             <thead>
               <tr className="text-right text-sm text-gray-500 border-b bg-gray-50">
                 <th className="px-5 py-3 font-semibold">الاسم</th>
-                <th className="px-5 py-3 font-semibold">البريد الإلكتروني</th>
+                <th className="px-5 py-3 font-semibold">اسم المستخدم</th>
                 <th className="px-5 py-3 font-semibold">الصلاحية</th>
                 <th className="px-5 py-3 font-semibold">إجراء</th>
               </tr>
@@ -138,7 +141,7 @@ export default function EmployeesPage() {
               {employees.map(emp => (
                 <tr key={emp.id} className="border-b hover:bg-gray-50 transition-colors">
                   <td className="px-5 py-4 font-medium text-gray-800">{emp.full_name}</td>
-                  <td className="px-5 py-4 text-gray-500">{emp.email}</td>
+                  <td className="px-5 py-4 text-gray-500">{emp.email?.replace('@alamani.iq', '') || '-'}</td>
                   <td className="px-5 py-4">
                     <span className={`badge ${roleColor(emp.role)}`}>{roleLabel(emp.role)}</span>
                   </td>
