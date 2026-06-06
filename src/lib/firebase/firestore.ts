@@ -44,6 +44,10 @@ export async function deleteCustomer(customerId: string) {
   await deleteDoc(doc(db, 'customers', customerId))
 }
 
+export async function deleteDeviceRequest(requestId: string) {
+  await deleteDoc(doc(db, 'device_requests', requestId))
+}
+
 // ---- طلبات الأجهزة ----
 export async function createDeviceRequest(data: {
   customer_id: string
