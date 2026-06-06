@@ -187,32 +187,36 @@ export async function searchActivatedRequests(search: string) {
 }
 
 export async function getDeliveredSubscriptions() {
-  const [activatedSnap, deliveredSnap] = await Promise.all([
+  const toISO = (val: unknown) => {
+    if (!val) return null
+    if (typeof val === 'string') return val
+    if (val instanceof Timestamp) return val.toDate().toISOString()
+    if (typeof val === 'object' && 'toDate' in val) return (val as Timestamp).toDate().toISOString()
+    return String(val)
+  }
+
+  // جيب كل device_requests والزبائن بنفس الوقت
+  const [activatedSnap, deliveredSnap, custSnap] = await Promise.all([
     getDocs(query(collection(db, 'device_requests'), where('status', '==', 'activated'))),
     getDocs(query(collection(db, 'device_requests'), where('status', '==', 'delivered'))),
+    getDocs(collection(db, 'customers')),
   ])
-  const allDocs = [...activatedSnap.docs, ...deliveredSnap.docs]
-  const requests = (allDocs
-    .map(d => ({ id: d.id, ...(d.data() as Record<string, unknown>) })) as Array<{ id: string } & Record<string, unknown>>)
-    .filter(r => r.subscription_end)
 
-  return Promise.all(requests.map(async (req) => {
-    const custSnap = await getDoc(doc(db, 'customers', req.customer_id as string))
-    const toISO = (val: unknown) => {
-      if (!val) return null
-      if (typeof val === 'string') return val
-      if (val instanceof Timestamp) return val.toDate().toISOString()
-      if (typeof val === 'object' && 'toDate' in val) return (val as Timestamp).toDate().toISOString()
-      return String(val)
-    }
-    return {
+  // بناء map للزبائن
+  const customersMap: Record<string, Record<string, unknown>> = {}
+  custSnap.docs.forEach(d => { customersMap[d.id] = { id: d.id, ...d.data() } })
+
+  const allDocs = [...activatedSnap.docs, ...deliveredSnap.docs]
+  return allDocs
+    .map(d => ({ id: d.id, ...(d.data() as Record<string, unknown>) }))
+    .filter(r => r.subscription_end)
+    .map(req => ({
       ...req,
       created_at: toISO(req.created_at),
       activation_date: toISO(req.activation_date),
       subscription_end: toISO(req.subscription_end),
-      customer: custSnap.exists() ? { id: custSnap.id, ...custSnap.data() } : null,
-    }
-  }))
+      customer: customersMap[req.customer_id as string] || null,
+    }))
 }
 
 export async function renewSubscription(requestId: string, newSub: SubscriptionType, currentEnd: string) {
