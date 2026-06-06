@@ -202,10 +202,10 @@ export default function DeliveryPage() {
     win.document.write(`
       <html><head><title>تعهد شراء جهاز GPS مع خط</title>
       <style>
-        @page { size: A4 portrait; margin: 4mm; }
+        @page { size: A4 portrait; margin: 5mm; }
         body { margin: 0; padding: 0; background: white; }
-        .page { width: 210mm; height: 297mm; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; padding: 0; }
-        .divider { border: none; border-top: 2px dashed #b8974a; margin: 3mm 0; }
+        .page { width: 200mm; display: flex; flex-direction: column; gap: 4mm; }
+        .divider { border: none; border-top: 2px dashed #b8974a; margin: 0; }
       </style></head>
       <body>
         <div class="page">
