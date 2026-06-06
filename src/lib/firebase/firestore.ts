@@ -36,6 +36,23 @@ export async function getAllCustomers() {
   return snap.docs.map(d => ({ id: d.id, ...d.data() }))
 }
 
+export async function getAllCustomersWithSubscriptions() {
+  const [custSnap, reqSnap] = await Promise.all([
+    getDocs(query(collection(db, 'customers'), orderBy('created_at', 'desc'))),
+    getDocs(collection(db, 'device_requests')),
+  ])
+  const reqByCustomer: Record<string, { gps_number?: string; sim_number?: string; subscription_end?: string; status?: string }> = {}
+  reqSnap.docs.forEach(d => {
+    const data = d.data()
+    if (data.customer_id) reqByCustomer[data.customer_id] = data
+  })
+  return custSnap.docs.map(d => ({
+    id: d.id,
+    ...d.data(),
+    subscription: reqByCustomer[d.id] || null,
+  }))
+}
+
 export async function deleteCustomer(customerId: string) {
   // احذف طلبات الجهاز المرتبطة بالزبون
   const reqSnap = await getDocs(query(collection(db, 'device_requests'), where('customer_id', '==', customerId)))

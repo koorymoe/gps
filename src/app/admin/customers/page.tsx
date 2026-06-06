@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getAllCustomers, deleteCustomer } from '@/lib/firebase/firestore'
-import { formatDate } from '@/lib/utils'
+import { getAllCustomersWithSubscriptions, deleteCustomer } from '@/lib/firebase/firestore'
+import { formatDate, getRemainingDays } from '@/lib/utils'
 
-interface Customer { id: string; full_name: string; father_name: string; grandfather_name: string; phone: string; address: string; created_at: { seconds: number } | string }
+interface Subscription { gps_number?: string; sim_number?: string; subscription_end?: string; status?: string }
+interface Customer { id: string; full_name: string; father_name: string; grandfather_name: string; phone: string; address: string; created_at: { seconds: number } | string; subscription: Subscription | null }
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([])
@@ -14,7 +15,7 @@ export default function CustomersPage() {
   const [deleting, setDeleting] = useState(false)
 
   async function load() {
-    const data = await getAllCustomers()
+    const data = await getAllCustomersWithSubscriptions()
     setCustomers(data as Customer[])
     setLoading(false)
   }
@@ -29,7 +30,8 @@ export default function CustomersPage() {
 
   const filtered = customers.filter(c => {
     const name = `${c.full_name} ${c.father_name} ${c.grandfather_name}`.toLowerCase()
-    return name.includes(search.toLowerCase()) || c.phone.includes(search)
+    const gps = c.subscription?.gps_number || ''
+    return name.includes(search.toLowerCase()) || c.phone.includes(search) || gps.includes(search)
   })
 
   function toggleSelect(id: string) {
@@ -59,6 +61,14 @@ export default function CustomersPage() {
     setDeleting(false)
   }
 
+  function getStatusBadge(sub: Subscription | null) {
+    if (!sub?.subscription_end) return <span className="text-gray-300 text-xs">-</span>
+    const days = getRemainingDays(sub.subscription_end)
+    if (days < 0) return <span className="badge bg-red-50 text-red-600">منتهي</span>
+    if (days < 30) return <span className="badge bg-yellow-50 text-yellow-600">قارب الانتهاء</span>
+    return <span className="badge bg-green-50 text-green-600">نشط</span>
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -67,7 +77,7 @@ export default function CustomersPage() {
       </div>
 
       <div className="flex gap-3 mb-4 items-center">
-        <input className="input-field max-w-sm" value={search} onChange={e => setSearch(e.target.value)} placeholder="بحث بالاسم أو رقم الهاتف..." />
+        <input className="input-field max-w-sm" value={search} onChange={e => setSearch(e.target.value)} placeholder="بحث بالاسم أو رقم الهاتف أو رقم GPS..." />
         {selected.size > 0 && (
           <button
             onClick={handleDeleteSelected}
@@ -81,8 +91,8 @@ export default function CustomersPage() {
       </div>
 
       {loading ? <div className="text-center text-gray-400 py-20">جارٍ التحميل...</div> : (
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          <table className="w-full">
+        <div className="bg-white rounded-2xl shadow-sm overflow-x-auto">
+          <table className="w-full min-w-max">
             <thead>
               <tr className="text-right text-sm text-gray-500 border-b bg-gray-50">
                 <th className="px-4 py-3">
@@ -90,7 +100,9 @@ export default function CustomersPage() {
                 </th>
                 <th className="px-5 py-3 font-semibold">الاسم الكامل</th>
                 <th className="px-5 py-3 font-semibold">رقم الهاتف</th>
-                <th className="px-5 py-3 font-semibold">العنوان</th>
+                <th className="px-5 py-3 font-semibold">رقم GPS</th>
+                <th className="px-5 py-3 font-semibold">ID الجهاز</th>
+                <th className="px-5 py-3 font-semibold">الحالة</th>
                 <th className="px-5 py-3 font-semibold">تاريخ التسجيل</th>
               </tr>
             </thead>
@@ -102,7 +114,9 @@ export default function CustomersPage() {
                   </td>
                   <td className="px-5 py-4 font-medium text-gray-800">{c.full_name} {c.father_name} {c.grandfather_name}</td>
                   <td className="px-5 py-4 text-gray-500">{c.phone}</td>
-                  <td className="px-5 py-4 text-gray-500 text-sm">{c.address}</td>
+                  <td className="px-5 py-4 font-bold" style={{ color: '#1a3a5c' }}>{c.subscription?.sim_number || '-'}</td>
+                  <td className="px-5 py-4 text-gray-500 text-sm">{c.subscription?.gps_number || '-'}</td>
+                  <td className="px-5 py-4">{getStatusBadge(c.subscription)}</td>
                   <td className="px-5 py-4 text-gray-500 text-sm">{getDate(c.created_at)}</td>
                 </tr>
               ))}

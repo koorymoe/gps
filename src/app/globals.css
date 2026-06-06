@@ -97,9 +97,12 @@ body {
 
 .sidebar {
   background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
-  min-height: 100vh;
+  height: 100vh;
   width: 260px;
   flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
 }
 
 .stat-card {
