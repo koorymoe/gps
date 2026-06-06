@@ -269,24 +269,25 @@ export async function searchCustomerSubscription(search: string) {
   const customersMap: Record<string, Record<string, unknown>> = {}
   custSnap.docs.forEach(d => { customersMap[d.id] = { id: d.id, ...d.data() } })
 
-  const s = search.toLowerCase()
+  const s = search.toLowerCase().trim()
+  const results = []
   for (const d of snap.docs) {
     const req = d.data() as Record<string, unknown>
     if (!req.subscription_end) continue
     const c = customersMap[req.customer_id as string]
     if (!c) continue
     const fullName = `${c.full_name} ${c.father_name} ${c.grandfather_name}`.toLowerCase()
-    if (fullName.includes(s) || String(c.phone).includes(search)) {
-      return {
+    if (fullName.includes(s) || String(c.phone).includes(s)) {
+      results.push({
         requestId: d.id,
-        customerId: c.id,
+        customerId: c.id as string,
         ...c,
         subscription_end: toISO(req.subscription_end),
         subscription_type: req.subscription_type,
-      }
+      })
     }
   }
-  return null
+  return results
 }
 
 // ---- الصيانة ----

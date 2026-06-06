@@ -7,10 +7,23 @@ import { searchCustomerSubscription, createRenewalRequest } from '@/lib/firebase
 import { getSubscriptionLabel, formatDate, getRemainingDays } from '@/lib/utils'
 import { SubscriptionType } from '@/types'
 
+type SearchResult = {
+  requestId: string
+  customerId: string
+  full_name: unknown
+  father_name: unknown
+  grandfather_name: unknown
+  phone: unknown
+  address: unknown
+  subscription_end: string | null
+  subscription_type: unknown
+}
+
 export default function EmployeeRenewalPage() {
   const router = useRouter()
   const [search, setSearch] = useState('')
-  const [found, setFound] = useState<Record<string, unknown> | null>(null)
+  const [results, setResults] = useState<SearchResult[]>([])
+  const [selected, setSelected] = useState<SearchResult | null>(null)
   const [notFound, setNotFound] = useState(false)
   const [newSub, setNewSub] = useState<SubscriptionType>('3_months')
   const [loading, setLoading] = useState(false)
@@ -19,25 +32,29 @@ export default function EmployeeRenewalPage() {
 
   async function handleSearch() {
     if (!search.trim()) return
-    setLoading(true); setNotFound(false); setFound(null); setError('')
+    setLoading(true); setNotFound(false); setResults([]); setSelected(null); setError('')
     const result = await searchCustomerSubscription(search)
-    if (result) setFound(result as Record<string, unknown>)
-    else setNotFound(true)
+    if (result.length > 0) {
+      setResults(result as SearchResult[])
+      if (result.length === 1) setSelected(result[0] as SearchResult)
+    } else {
+      setNotFound(true)
+    }
     setLoading(false)
   }
 
   async function handleSubmit() {
-    if (!found) return
+    if (!selected) return
     const user = auth.currentUser
     if (!user) { setError('غير مسجل'); return }
     setLoading(true); setError('')
     try {
       await createRenewalRequest({
-        customer_id: found.customerId as string,
-        original_request_id: found.requestId as string,
+        customer_id: selected.customerId,
+        original_request_id: selected.requestId,
         employee_id: user.uid,
         subscription_type: newSub,
-        current_end: found.subscription_end as string,
+        current_end: selected.subscription_end as string,
       })
       setSuccess(true)
     } catch {
@@ -54,7 +71,7 @@ export default function EmployeeRenewalPage() {
         <p className="text-gray-500 mb-6">سيتم مراجعته والموافقة عليه من قبل الإداري</p>
         <div className="flex gap-3">
           <button onClick={() => router.push('/employee')} className="btn-primary">الرئيسية</button>
-          <button onClick={() => { setSuccess(false); setFound(null); setSearch('') }} className="btn-secondary">طلب آخر</button>
+          <button onClick={() => { setSuccess(false); setSelected(null); setResults([]); setSearch('') }} className="btn-secondary">طلب آخر</button>
         </div>
       </div>
     )
@@ -67,7 +84,7 @@ export default function EmployeeRenewalPage() {
         <h1 className="text-2xl font-bold" style={{ color: '#1a3a5c' }}>طلب تجديد اشتراك 🔄</h1>
       </div>
 
-      <div className="card mb-6">
+      <div className="card mb-4">
         <h3 className="font-semibold mb-4" style={{ color: '#1a3a5c' }}>البحث عن الزبون</h3>
         <div className="flex gap-3">
           <input
@@ -85,19 +102,57 @@ export default function EmployeeRenewalPage() {
         {notFound && <p className="text-red-500 text-sm mt-3">لم يتم العثور على الزبون</p>}
       </div>
 
-      {found && (
+      {/* قائمة النتائج */}
+      {results.length > 1 && !selected && (
+        <div className="card mb-4">
+          <h3 className="font-semibold mb-3" style={{ color: '#1a3a5c' }}>نتائج البحث ({results.length})</h3>
+          <div className="space-y-2">
+            {results.map(r => {
+              const days = r.subscription_end ? getRemainingDays(r.subscription_end) : null
+              return (
+                <button
+                  key={r.requestId}
+                  onClick={() => setSelected(r)}
+                  className="w-full text-right p-4 rounded-xl border-2 hover:border-blue-400 transition-all"
+                  style={{ borderColor: '#e2e8f0', background: '#f8fafc' }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-semibold text-gray-800">{r.full_name as string} {r.father_name as string} {r.grandfather_name as string}</div>
+                      <div className="text-sm text-gray-500 mt-0.5">📞 {r.phone as string}</div>
+                    </div>
+                    {days !== null && (
+                      <span className="font-bold text-sm" style={{ color: days < 0 ? '#dc2626' : days < 30 ? '#d97706' : '#16a34a' }}>
+                        {days < 0 ? `منتهي ${Math.abs(days)} يوم` : `${days} يوم`}
+                      </span>
+                    )}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* تفاصيل الزبون المختار */}
+      {selected && (
         <div className="card space-y-5">
-          <h3 className="font-semibold" style={{ color: '#1a3a5c' }}>بيانات الزبون</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold" style={{ color: '#1a3a5c' }}>بيانات الزبون</h3>
+            {results.length > 1 && (
+              <button onClick={() => setSelected(null)} className="text-sm text-blue-500 hover:text-blue-700">← تغيير الزبون</button>
+            )}
+          </div>
           <div className="grid grid-cols-2 gap-3 text-sm p-4 rounded-xl bg-gray-50">
-            <div><span className="text-gray-500">الاسم: </span><span className="font-semibold">{found.full_name as string} {found.father_name as string} {found.grandfather_name as string}</span></div>
-            <div><span className="text-gray-500">الهاتف: </span><span className="font-semibold">{found.phone as string}</span></div>
-            <div><span className="text-gray-500">العنوان: </span><span className="font-semibold">{found.address as string}</span></div>
-            <div><span className="text-gray-500">الاشتراك الحالي: </span><span className="font-semibold">{getSubscriptionLabel(found.subscription_type as SubscriptionType)}</span></div>
-            <div><span className="text-gray-500">تاريخ الانتهاء: </span><span className="font-semibold">{formatDate(found.subscription_end as string)}</span></div>
+            <div><span className="text-gray-500">الاسم: </span><span className="font-semibold">{selected.full_name as string} {selected.father_name as string} {selected.grandfather_name as string}</span></div>
+            <div><span className="text-gray-500">الهاتف: </span><span className="font-semibold">{selected.phone as string}</span></div>
+            <div><span className="text-gray-500">العنوان: </span><span className="font-semibold">{selected.address as string}</span></div>
+            <div><span className="text-gray-500">الاشتراك الحالي: </span><span className="font-semibold">{getSubscriptionLabel(selected.subscription_type as SubscriptionType)}</span></div>
+            <div><span className="text-gray-500">تاريخ الانتهاء: </span><span className="font-semibold">{selected.subscription_end ? formatDate(selected.subscription_end) : '-'}</span></div>
             <div>
               <span className="text-gray-500">الأيام المتبقية: </span>
-              <span className="font-semibold" style={{ color: getRemainingDays(found.subscription_end as string) < 0 ? '#dc2626' : '#16a34a' }}>
-                {getRemainingDays(found.subscription_end as string)} يوم
+              <span className="font-semibold" style={{ color: selected.subscription_end && getRemainingDays(selected.subscription_end) < 0 ? '#dc2626' : '#16a34a' }}>
+                {selected.subscription_end ? getRemainingDays(selected.subscription_end) : '-'} يوم
               </span>
             </div>
           </div>
