@@ -6,7 +6,7 @@ import { loginUser, getUserProfile } from '@/lib/firebase/auth'
 
 export default function LoginPage() {
   const router = useRouter()
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -16,13 +16,12 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
     try {
-      const email = `${username.trim()}@alamani.iq`
       const user = await loginUser(email, password)
       const profile = await getUserProfile(user.uid)
       if (profile?.role === 'admin') router.push('/admin')
       else router.push('/employee')
     } catch {
-      setError('اسم المستخدم أو كلمة المرور غير صحيحة')
+      setError('البريد الإلكتروني أو كلمة المرور غير صحيحة')
     }
     setLoading(false)
   }
@@ -57,15 +56,15 @@ export default function LoginPage() {
             <h2 className="text-xl font-bold text-center mb-6" style={{ color: '#1a3a5c' }}>تسجيل الدخول</h2>
             <form onSubmit={handleLogin} className="space-y-5">
               <div>
-                <label className="label">اسم المستخدم</label>
+                <label className="label">البريد الإلكتروني</label>
                 <div className="relative">
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                      <circle cx="12" cy="7" r="4"/>
+                      <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2z"/>
+                      <polyline points="22,6 12,13 2,6"/>
                     </svg>
                   </span>
-                  <input type="text" className="input-field pr-10" placeholder="اسم المستخدم" value={username} onChange={e => setUsername(e.target.value)} required />
+                  <input type="email" className="input-field pr-10" placeholder="example@alamani.iq" value={email} onChange={e => setEmail(e.target.value)} required />
                 </div>
               </div>
               <div>
