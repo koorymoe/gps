@@ -118,9 +118,9 @@ export default function DeliveryPage() {
     `
 
     const makeCopy = (copyLabel: string) => `
-      <div style="width:190mm;min-height:132mm;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Arial,sans-serif;direction:rtl;border:2px solid #b8974a;border-radius:6px;overflow:hidden;background:white;">
+      <div style="width:190mm;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Arial,sans-serif;direction:rtl;border:2px solid #b8974a;border-radius:6px;overflow:hidden;background:white;">
         <img src="${IMG_FBANNER}" style="width:100%;height:auto;display:block;" />
-        <div style="display:flex;height:calc(100% - 0px);">
+        <div style="display:flex;">
           <div style="flex:1;padding:8px 14px 8px 8px;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
               <h2 style="font-size:13px;font-weight:bold;color:#1a3a5c;margin:0;">تعهد شراء جهاز GPS مع خط</h2>
