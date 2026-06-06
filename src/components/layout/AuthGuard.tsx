@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { onAuthChange, getUserProfile } from '@/lib/firebase/auth'
 import { logoutUser } from '@/lib/firebase/auth'
+import { useAuth } from '@/lib/AuthContext'
 import Sidebar from './Sidebar'
 
 interface AuthGuardProps {
@@ -154,31 +154,19 @@ function MobileNav({ role, userName }: MobileNavProps) {
   )
 }
 
-const profileCache: Record<string, { full_name: string; role: string }> = {}
-
 export default function AuthGuard({ children, requiredRole }: AuthGuardProps) {
   const router = useRouter()
-  const [userName, setUserName] = useState('')
-  const [ready, setReady] = useState(false)
+  const { user, ready } = useAuth()
+  const userName = user?.full_name || ''
 
   useEffect(() => {
-    const unsub = onAuthChange(async (user) => {
-      if (!user) { router.push('/'); return }
-      let profile = profileCache[user.uid]
-      if (!profile) {
-        profile = await getUserProfile(user.uid) as { full_name: string; role: string }
-        if (profile) profileCache[user.uid] = profile
-      }
-      if (!profile) { router.push('/'); return }
-      if (requiredRole === 'admin' && profile.role !== 'admin') { router.push('/employee'); return }
-      if (requiredRole === 'employee' && profile.role === 'admin') { router.push('/admin'); return }
-      setUserName(profile.full_name || '')
-      setReady(true)
-    })
-    return () => unsub()
-  }, [router, requiredRole])
+    if (!ready) return
+    if (!user) { router.push('/'); return }
+    if (requiredRole === 'admin' && user.role !== 'admin') { router.push('/employee'); return }
+    if (requiredRole === 'employee' && user.role === 'admin') { router.push('/admin'); return }
+  }, [ready, user, router, requiredRole])
 
-  if (!ready) {
+  if (!ready || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#f0f4f8' }}>
         <div className="text-center">
