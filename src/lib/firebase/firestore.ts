@@ -1,5 +1,5 @@
 import {
-  collection, doc, addDoc, updateDoc, getDocs, getDoc, setDoc,
+  collection, doc, addDoc, updateDoc, deleteDoc, getDocs, getDoc, setDoc,
   query, where, orderBy, Timestamp, serverTimestamp
 } from 'firebase/firestore'
 import { db } from './config'
@@ -34,6 +34,10 @@ export async function createCustomer(data: {
 export async function getAllCustomers() {
   const snap = await getDocs(query(collection(db, 'customers'), orderBy('created_at', 'desc')))
   return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+}
+
+export async function deleteCustomer(customerId: string) {
+  await deleteDoc(doc(db, 'customers', customerId))
 }
 
 // ---- طلبات الأجهزة ----

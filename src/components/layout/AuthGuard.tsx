@@ -154,6 +154,8 @@ function MobileNav({ role, userName }: MobileNavProps) {
   )
 }
 
+const profileCache: Record<string, { full_name: string; role: string }> = {}
+
 export default function AuthGuard({ children, requiredRole }: AuthGuardProps) {
   const router = useRouter()
   const [userName, setUserName] = useState('')
@@ -162,7 +164,11 @@ export default function AuthGuard({ children, requiredRole }: AuthGuardProps) {
   useEffect(() => {
     const unsub = onAuthChange(async (user) => {
       if (!user) { router.push('/'); return }
-      const profile = await getUserProfile(user.uid)
+      let profile = profileCache[user.uid]
+      if (!profile) {
+        profile = await getUserProfile(user.uid) as { full_name: string; role: string }
+        if (profile) profileCache[user.uid] = profile
+      }
       if (!profile) { router.push('/'); return }
       if (requiredRole === 'admin' && profile.role !== 'admin') { router.push('/employee'); return }
       if (requiredRole === 'employee' && profile.role === 'admin') { router.push('/admin'); return }
