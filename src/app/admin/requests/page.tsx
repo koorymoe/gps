@@ -57,6 +57,9 @@ export default function RequestsPage() {
   }
 
   function handlePrint(req: Request) {
+    const baseUrl = window.location.origin
+    const bannerUrl = `${baseUrl}/form-fbanner.png`
+    const vstripUrl = `${baseUrl}/form-vstrip.png`
     const customerName = req.customer ? `${req.customer.full_name} ${req.customer.father_name} ${req.customer.grandfather_name}` : '-'
     const subLabel = req.subscription_type ? getSubscriptionLabel(req.subscription_type as SubscriptionType) : 'لا يوجد'
     const purchaseDate = formatDate(typeof req.created_at === 'string' ? req.created_at : new Date((req.created_at as { seconds: number }).seconds * 1000).toISOString())
@@ -92,9 +95,9 @@ export default function RequestsPage() {
                 <span>توقيع المسؤول: _______________</span>
               </div>
             </div>
-            <img src="${IMG_VSTRIP}" style="width:28px;display:block;object-fit:cover;flex-shrink:0;" />
+            <img src="${vstripUrl}" style="width:28px;display:block;object-fit:cover;flex-shrink:0;" />
           </div>
-          <img src="${IMG_FBANNER}" style="width:100%;display:block;flex-shrink:0;" />
+          <img src="${bannerUrl}" style="width:100%;display:block;flex-shrink:0;" />
         </div>
       </div>
     `

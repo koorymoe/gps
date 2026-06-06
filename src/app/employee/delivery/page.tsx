@@ -85,6 +85,9 @@ export default function DeliveryPage() {
   }
 
   function printInvoice(req: ActivatedRequest) {
+    const baseUrl = window.location.origin
+    const bannerUrl = `${baseUrl}/form-fbanner.png`
+    const vstripUrl = `${baseUrl}/form-vstrip.png`
     const customerName = req.customer
       ? `${req.customer.full_name} ${req.customer.father_name} ${req.customer.grandfather_name}`
       : '-'
@@ -190,9 +193,9 @@ export default function DeliveryPage() {
                 <div style="text-align:center;"><div style="height:22px;border-bottom:1px solid #333;margin-bottom:3px;font-size:9px;font-weight:bold;padding-top:5px;">${today}</div><div>التاريخ</div></div>
               </div>
             </div>
-            <img src="${IMG_VSTRIP}" style="width:32px;display:block;object-fit:cover;" />
+            <img src="${vstripUrl}" style="width:32px;display:block;object-fit:cover;" />
           </div>
-          <img src="${IMG_FBANNER}" style="width:100%;display:block;flex-shrink:0;" />
+          <img src="${bannerUrl}" style="width:100%;display:block;flex-shrink:0;" />
         </div>
       </div>
     `
