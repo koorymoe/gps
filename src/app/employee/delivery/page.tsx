@@ -121,10 +121,9 @@ export default function DeliveryPage() {
     `
 
     const makeCopy = (copyLabel: string) => `
-      <div style="width:100%;height:139mm;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Arial,sans-serif;direction:rtl;background:white;">
-        <div style="border:2px solid #b8974a;border-radius:6px;overflow:hidden;height:100%;display:flex;flex-direction:column;justify-content:space-between;">
-          <div style="display:flex;flex:1;overflow:hidden;min-height:0;">
-            <div style="flex:1;padding:6px 12px 6px 6px;overflow:hidden;">
+      <div style="width:100%;height:139mm;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Arial,sans-serif;direction:rtl;background:white;position:relative;border:2px solid #b8974a;border-radius:6px;overflow:hidden;">
+        <div style="display:flex;height:calc(139mm - 22mm);overflow:hidden;">
+          <div style="flex:1;padding:6px 12px 6px 6px;overflow:hidden;">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
                 <h2 style="font-size:12px;font-weight:bold;color:#1a3a5c;margin:0;">تعهد شراء جهاز GPS مع خط</h2>
                 <span style="font-size:8px;background:#1a3a5c;color:white;padding:2px 8px;border-radius:10px;">نسخة ${copyLabel}</span>
@@ -193,10 +192,9 @@ export default function DeliveryPage() {
                 <div style="text-align:center;"><div style="height:22px;border-bottom:1px solid #333;margin-bottom:3px;font-size:9px;font-weight:bold;padding-top:5px;">${today}</div><div>التاريخ</div></div>
               </div>
             </div>
-            <img src="${vstripUrl}" style="width:32px;display:block;object-fit:cover;" />
-          </div>
-          <img src="${bannerUrl}" style="width:100%;display:block;flex-shrink:0;" />
+          <img src="${vstripUrl}" style="width:32px;display:block;object-fit:cover;" />
         </div>
+        <img src="${bannerUrl}" style="position:absolute;bottom:0;left:0;width:100%;display:block;" />
       </div>
     `
 
