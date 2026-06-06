@@ -136,44 +136,64 @@ export async function deliverToCustomer(requestId: string, employeeId: string) {
 }
 
 export async function getAllActivatedRequests() {
-  const snap = await getDocs(query(collection(db, 'device_requests'), where('status', '==', 'activated')))
-  const requests = snap.docs.map(d => ({ id: d.id, ...(d.data() as Record<string, unknown>) })) as Array<{ id: string } & Record<string, unknown>>
-  const results = []
-  for (const req of requests) {
-    const custSnap = await getDoc(doc(db, 'customers', req.customer_id as string))
-    if (!custSnap.exists()) continue
-    const c = custSnap.data()
-    results.push({
-      ...req,
-      activation_date: req.activation_date ? (req.activation_date as Timestamp).toDate().toISOString() : null,
-      subscription_end: req.subscription_end ? (req.subscription_end as Timestamp).toDate().toISOString() : null,
-      customer: { id: custSnap.id, ...c },
-    })
+  const toISO = (val: unknown) => {
+    if (!val) return null
+    if (typeof val === 'string') return val
+    if (val instanceof Timestamp) return val.toDate().toISOString()
+    if (typeof val === 'object' && 'toDate' in val) return (val as Timestamp).toDate().toISOString()
+    return null
   }
-  return results
+  const [snap, custSnap] = await Promise.all([
+    getDocs(query(collection(db, 'device_requests'), where('status', '==', 'activated'))),
+    getDocs(collection(db, 'customers')),
+  ])
+  const customersMap: Record<string, Record<string, unknown>> = {}
+  custSnap.docs.forEach(d => { customersMap[d.id] = { id: d.id, ...d.data() } })
+  return snap.docs.map(d => {
+    const req = d.data() as Record<string, unknown>
+    return {
+      id: d.id,
+      ...req,
+      activation_date: toISO(req.activation_date),
+      subscription_end: toISO(req.subscription_end),
+      customer: customersMap[req.customer_id as string] || null,
+    }
+  }).filter(r => r.customer)
 }
 
 export async function getRecentlyDelivered() {
-  const snap = await getDocs(query(collection(db, 'device_requests'), where('status', '==', 'delivered')))
-  const requests = snap.docs.map(d => ({ id: d.id, ...(d.data() as Record<string, unknown>) })) as Array<{ id: string } & Record<string, unknown>>
-  const results = []
-  for (const req of requests) {
-    const custSnap = await getDoc(doc(db, 'customers', req.customer_id as string))
-    if (!custSnap.exists()) continue
-    const c = custSnap.data()
-    results.push({
-      ...req,
-      activation_date: req.activation_date ? (req.activation_date as Timestamp).toDate().toISOString() : null,
-      subscription_end: req.subscription_end ? (req.subscription_end as Timestamp).toDate().toISOString() : null,
-      delivered_to_customer_at: req.delivered_to_customer_at ? (req.delivered_to_customer_at as Timestamp).toDate().toISOString() : null,
-      customer: { id: custSnap.id, ...c },
-    })
+  const toISO = (val: unknown) => {
+    if (!val) return null
+    if (typeof val === 'string') return val
+    if (val instanceof Timestamp) return val.toDate().toISOString()
+    if (typeof val === 'object' && 'toDate' in val) return (val as Timestamp).toDate().toISOString()
+    return null
   }
-  return results.sort((a, b) => {
-    const aDate = a.delivered_to_customer_at as string | null
-    const bDate = b.delivered_to_customer_at as string | null
-    return (bDate || '').localeCompare(aDate || '')
-  }).slice(0, 20)
+  const [snap, custSnap] = await Promise.all([
+    getDocs(query(collection(db, 'device_requests'), where('status', '==', 'delivered'))),
+    getDocs(collection(db, 'customers')),
+  ])
+  const customersMap: Record<string, Record<string, unknown>> = {}
+  custSnap.docs.forEach(d => { customersMap[d.id] = { id: d.id, ...d.data() } })
+  return snap.docs
+    .map(d => {
+      const req = d.data() as Record<string, unknown>
+      return {
+        id: d.id,
+        ...req,
+        activation_date: toISO(req.activation_date),
+        subscription_end: toISO(req.subscription_end),
+        delivered_to_customer_at: toISO(req.delivered_to_customer_at),
+        customer: customersMap[req.customer_id as string] || null,
+      }
+    })
+    .filter(r => r.customer)
+    .sort((a, b) => {
+      const da = a.delivered_to_customer_at || ''
+      const db2 = b.delivered_to_customer_at || ''
+      return db2 > da ? 1 : -1
+    })
+    .slice(0, 20)
 }
 
 export async function searchActivatedRequests(search: string) {
@@ -207,14 +227,14 @@ export async function getDeliveredSubscriptions() {
   custSnap.docs.forEach(d => { customersMap[d.id] = { id: d.id, ...d.data() } })
 
   const allDocs = [...activatedSnap.docs, ...deliveredSnap.docs]
-  return allDocs
-    .map(d => ({ id: d.id, ...(d.data() as Record<string, unknown>) }))
+  const mapped = allDocs.map(d => ({ id: d.id, ...d.data() } as Record<string, unknown>))
+  return mapped
     .filter(r => r.subscription_end)
     .map(req => ({
       ...req,
       created_at: toISO(req.created_at),
       activation_date: toISO(req.activation_date),
-      subscription_end: toISO(req.subscription_end),
+      subscription_end: toISO(req.subscription_end) as string,
       customer: customersMap[req.customer_id as string] || null,
     }))
 }
@@ -235,20 +255,33 @@ export async function renewSubscription(requestId: string, newSub: SubscriptionT
 }
 
 export async function searchCustomerSubscription(search: string) {
-  const snap = await getDocs(query(collection(db, 'device_requests'), where('status', '==', 'delivered')))
-  const requests = (snap.docs.map(d => ({ id: d.id, ...(d.data() as Record<string, unknown>) })) as Array<{ id: string } & Record<string, unknown>>).filter(r => r.subscription_end)
+  const toISO = (val: unknown) => {
+    if (!val) return null
+    if (typeof val === 'string') return val
+    if (val instanceof Timestamp) return val.toDate().toISOString()
+    if (typeof val === 'object' && 'toDate' in val) return (val as Timestamp).toDate().toISOString()
+    return null
+  }
+  const [snap, custSnap] = await Promise.all([
+    getDocs(collection(db, 'device_requests')),
+    getDocs(collection(db, 'customers')),
+  ])
+  const customersMap: Record<string, Record<string, unknown>> = {}
+  custSnap.docs.forEach(d => { customersMap[d.id] = { id: d.id, ...d.data() } })
 
-  for (const req of requests) {
-    const custSnap = await getDoc(doc(db, 'customers', req.customer_id as string))
-    if (!custSnap.exists()) continue
-    const c = custSnap.data()
+  const s = search.toLowerCase()
+  for (const d of snap.docs) {
+    const req = d.data() as Record<string, unknown>
+    if (!req.subscription_end) continue
+    const c = customersMap[req.customer_id as string]
+    if (!c) continue
     const fullName = `${c.full_name} ${c.father_name} ${c.grandfather_name}`.toLowerCase()
-    if (fullName.includes(search.toLowerCase()) || c.phone.includes(search)) {
+    if (fullName.includes(s) || String(c.phone).includes(search)) {
       return {
-        requestId: req.id,
-        customerId: custSnap.id,
+        requestId: d.id,
+        customerId: c.id,
         ...c,
-        subscription_end: (req.subscription_end as Timestamp).toDate().toISOString(),
+        subscription_end: toISO(req.subscription_end),
         subscription_type: req.subscription_type,
       }
     }
