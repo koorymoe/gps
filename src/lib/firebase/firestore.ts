@@ -198,11 +198,18 @@ export async function getDeliveredSubscriptions() {
 
   return Promise.all(requests.map(async (req) => {
     const custSnap = await getDoc(doc(db, 'customers', req.customer_id as string))
+    const toISO = (val: unknown) => {
+      if (!val) return null
+      if (typeof val === 'string') return val
+      if (val instanceof Timestamp) return val.toDate().toISOString()
+      if (typeof val === 'object' && 'toDate' in val) return (val as Timestamp).toDate().toISOString()
+      return String(val)
+    }
     return {
       ...req,
-      created_at: req.created_at ? (req.created_at as Timestamp).toDate().toISOString() : null,
-      activation_date: req.activation_date ? (req.activation_date as Timestamp).toDate().toISOString() : null,
-      subscription_end: (req.subscription_end as Timestamp).toDate().toISOString(),
+      created_at: toISO(req.created_at),
+      activation_date: toISO(req.activation_date),
+      subscription_end: toISO(req.subscription_end),
       customer: custSnap.exists() ? { id: custSnap.id, ...custSnap.data() } : null,
     }
   }))
