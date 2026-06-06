@@ -37,6 +37,10 @@ export async function getAllCustomers() {
 }
 
 export async function deleteCustomer(customerId: string) {
+  // احذف طلبات الجهاز المرتبطة بالزبون
+  const reqSnap = await getDocs(query(collection(db, 'device_requests'), where('customer_id', '==', customerId)))
+  await Promise.all(reqSnap.docs.map(d => deleteDoc(d.ref)))
+  // احذف الزبون
   await deleteDoc(doc(db, 'customers', customerId))
 }
 
