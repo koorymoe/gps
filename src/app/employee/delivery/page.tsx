@@ -118,74 +118,79 @@ export default function DeliveryPage() {
     `
 
     const makeCopy = (copyLabel: string) => `
-      <div style="width:190mm;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Arial,sans-serif;direction:rtl;border:2px solid #b8974a;border-radius:6px;overflow:hidden;background:white;">
-        <img src="${IMG_FBANNER}" style="width:100%;height:auto;display:block;" />
-        <div style="display:flex;">
-          <div style="flex:1;padding:8px 14px 8px 8px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-              <h2 style="font-size:13px;font-weight:bold;color:#1a3a5c;margin:0;">تعهد شراء جهاز GPS مع خط</h2>
-              <span style="font-size:9px;background:#1a3a5c;color:white;padding:2px 8px;border-radius:10px;">نسخة ${copyLabel}</span>
+      <div style="width:197mm;height:135mm;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Arial,sans-serif;direction:rtl;border:2px solid #b8974a;border-radius:4px;overflow:hidden;background:white;display:flex;flex-direction:column;">
+        <img src="${IMG_FBANNER}" style="width:100%;height:auto;display:block;flex-shrink:0;" />
+        <div style="display:flex;flex:1;overflow:hidden;">
+          <div style="flex:1;padding:4px 10px 4px 6px;overflow:hidden;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+              <h2 style="font-size:11px;font-weight:bold;color:#1a3a5c;margin:0;">تعهد شراء جهاز GPS مع خط</h2>
+              <span style="font-size:8px;background:#1a3a5c;color:white;padding:1px 6px;border-radius:8px;">نسخة ${copyLabel}</span>
             </div>
-            <p style="font-size:9px;color:#333;margin:0 0 6px 0;line-height:1.5;border:1px solid #e8d8b0;padding:5px 8px;border-radius:4px;background:#fffdf5;">
-              إني <strong>${customerName}</strong> الموقع أدناه صاحب الشريحة المبين رقمها التسلسلي أدناه اشتريت جهاز GPS صنف خاص للتتبع فقط من <strong>(شركة الأماني للتجارة العامة والاستثمارات العقارية والوكالات التجارية م.م)</strong> وأوافق على جميع تفاصيل هذا العقد ولأجله وقعت أدناه
+            <p style="font-size:7.5px;color:#333;margin:0 0 3px 0;line-height:1.4;border:1px solid #e8d8b0;padding:3px 6px;border-radius:3px;background:#fffdf5;">
+              إني <strong>${customerName}</strong> اشتريت جهاز GPS من <strong>(شركة الأماني للتجارة العامة والاستثمارات العقارية والوكالات التجارية م.م)</strong> وأوافق على جميع بنود هذا العقد
             </p>
-            <table style="width:100%;border-collapse:collapse;font-size:9.5px;margin-bottom:6px;">
+            <table style="width:100%;border-collapse:collapse;font-size:8px;margin-bottom:3px;">
               <tr>
-                <td style="padding:4px 8px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;width:33%;">رقم حساب المشتري</td>
-                <td style="padding:4px 8px;border:1px solid #d4b896;font-weight:bold;color:#1a3a5c;width:17%;">${accountNum}</td>
-                <td style="padding:4px 8px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;width:33%;">رقم الهاتف</td>
-                <td style="padding:4px 8px;border:1px solid #d4b896;font-weight:bold;width:17%;">${req.customer?.phone || '___________'}</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;width:33%;">رقم حساب المشتري</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;font-weight:bold;color:#1a3a5c;width:17%;">${accountNum}</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;width:33%;">رقم الهاتف</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;font-weight:bold;width:17%;">${req.customer?.phone || '___________'}</td>
               </tr>
               <tr>
-                <td style="padding:4px 8px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">عنوان السكن</td>
-                <td colspan="3" style="padding:4px 8px;border:1px solid #d4b896;">${req.customer?.address || '___________'}</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">عنوان السكن</td>
+                <td colspan="3" style="padding:2px 5px;border:1px solid #d4b896;">${req.customer?.address || '___________'}</td>
               </tr>
               <tr>
-                <td style="padding:4px 8px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">رقم البطاقة الوطنية</td>
-                <td style="padding:4px 8px;border:1px solid #d4b896;">${nationalId}</td>
-                <td style="padding:4px 8px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">رقم بطاقة السكن</td>
-                <td style="padding:4px 8px;border:1px solid #d4b896;">${residenceNum}</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">رقم البطاقة الوطنية</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;">${nationalId}</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">رقم بطاقة السكن</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;">${residenceNum}</td>
               </tr>
               <tr>
-                <td style="padding:4px 8px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">نوع الاشتراك</td>
-                <td style="padding:4px 8px;border:1px solid #d4b896;font-weight:bold;">${subLabel}</td>
-                <td style="padding:4px 8px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">نوع المركبة</td>
-                <td style="padding:4px 8px;border:1px solid #d4b896;">___________</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">نوع الاشتراك</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;font-weight:bold;">${subLabel}</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">نوع المركبة</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;">___________</td>
               </tr>
               <tr>
-                <td style="padding:4px 8px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">رقم المركبة أو الشاسيه</td>
-                <td style="padding:4px 8px;border:1px solid #d4b896;">___________</td>
-                <td style="padding:4px 8px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">اللون</td>
-                <td style="padding:4px 8px;border:1px solid #d4b896;">___________</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">رقم المركبة أو الشاسيه</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;">___________</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">اللون</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;">___________</td>
               </tr>
               <tr>
-                <td style="padding:4px 8px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">ID GPS (رقم الجهاز)</td>
-                <td style="padding:4px 8px;border:1px solid #d4b896;font-weight:bold;color:#1a3a5c;">${gpsNum}</td>
-                <td style="padding:4px 8px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">رقم الشريحة</td>
-                <td style="padding:4px 8px;border:1px solid #d4b896;font-weight:bold;">${simNum}</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">ID GPS (رقم الجهاز)</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;font-weight:bold;color:#1a3a5c;">${gpsNum}</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">رقم الشريحة</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;font-weight:bold;">${simNum}</td>
               </tr>
             </table>
-            ${contractTerms}
-            <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;font-size:9px;border-top:1px dashed #c9a84c;padding-top:6px;">
-              <div style="text-align:center;">
-                <div style="height:25px;border-bottom:1px solid #333;margin-bottom:3px;"></div>
-                <div>توقيع المشتري</div>
-              </div>
-              <div style="text-align:center;">
-                <div style="height:25px;border-bottom:1px solid #333;margin-bottom:3px;"></div>
-                <div>اسم الفني</div>
-              </div>
-              <div style="text-align:center;">
-                <div style="height:25px;border-bottom:1px solid #333;margin-bottom:3px;"></div>
-                <div>توقيع مخول</div>
-              </div>
-              <div style="text-align:center;">
-                <div style="height:25px;border-bottom:1px solid #333;margin-bottom:3px;padding-top:6px;font-size:10px;font-weight:bold;">${today}</div>
-                <div>التاريخ</div>
-              </div>
+            <div style="margin-bottom:3px;">
+              <div style="font-weight:bold;font-size:8.5px;margin-bottom:2px;color:#1a3a5c;border-bottom:1px solid #c9a84c;padding-bottom:1px;">بنود العقد</div>
+              <ol style="margin:0;padding-right:14px;font-size:7px;line-height:1.55;color:#222;columns:2;column-gap:10px;">
+                <li>يلتزم المشتري بدفع الاشتراك الشهري في موعده المحدد، وفي حال التأخر يتحمل المشتري المسؤولية الكاملة عن أي انقطاع في الخدمة.</li>
+                <li>الجهاز ملك للمشتري وعليه المحافظة عليه، وفي حال تلفه أو فقدانه يتحمل المشتري تكلفة الاستبدال كاملاً.</li>
+                <li>لا تتحمل الشركة أي مسؤولية عن الضرر الناجم عن انقطاع الإنترنت أو انقطاع التيار الكهربائي أو أي قوة قاهرة.</li>
+                <li>يحق للشركة إيقاف الخدمة فوراً في حال مخالفة أي بند من بنود هذا العقد.</li>
+                <li>لا يحق للمشتري نقل الجهاز أو الشريحة إلى شخص آخر دون إشعار الشركة خطياً.</li>
+                <li>في حال الرغبة بإلغاء الاشتراك يجب إشعار الشركة قبل أسبوع من تاريخ الاستحقاق.</li>
+                <li>يتعهد المشتري بعدم استخدام الجهاز لأغراض غير مشروعة.</li>
+                <li>يُعدّ هذا العقد ملزماً لكلا الطرفين ويخضع لقوانين جمهورية العراق.</li>
+                <li>في حال فقدان الجهاز أو سرقته يجب إبلاغ الشركة فوراً خلال ٢٤ ساعة.</li>
+                <li>يلتزم المشتري بعدم فك الجهاز أو التلاعب في برمجته تحت طائلة إلغاء الضمان.</li>
+                <li>تلتزم الشركة بتقديم الدعم الفني خلال أوقات الدوام الرسمي فقط.</li>
+                <li>يحق للشركة تعديل أسعار الاشتراك مع إشعار المشتري قبل شهر من التعديل.</li>
+                <li>يُقر المشتري بأنه اطلع على جميع بنود هذا العقد ووافق عليها طوعاً واختياراً.</li>
+              </ol>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;font-size:7.5px;border-top:1px dashed #c9a84c;padding-top:3px;">
+              <div style="text-align:center;"><div style="height:18px;border-bottom:1px solid #333;margin-bottom:2px;"></div><div>توقيع المشتري</div></div>
+              <div style="text-align:center;"><div style="height:18px;border-bottom:1px solid #333;margin-bottom:2px;"></div><div>اسم الفني</div></div>
+              <div style="text-align:center;"><div style="height:18px;border-bottom:1px solid #333;margin-bottom:2px;"></div><div>توقيع مخول</div></div>
+              <div style="text-align:center;"><div style="height:18px;border-bottom:1px solid #333;margin-bottom:2px;font-size:8px;font-weight:bold;padding-top:4px;">${today}</div><div>التاريخ</div></div>
             </div>
           </div>
-          <img src="${IMG_VSTRIP}" style="width:36px;display:block;object-fit:cover;object-position:center;" />
+          <img src="${IMG_VSTRIP}" style="width:30px;display:block;object-fit:cover;object-position:center;flex-shrink:0;" />
         </div>
       </div>
     `
@@ -195,13 +200,17 @@ export default function DeliveryPage() {
     win.document.write(`
       <html><head><title>تعهد شراء جهاز GPS مع خط</title>
       <style>
-        @page { size: A4 portrait; margin: 8mm; }
-        body { margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6mm; align-items: center; background: white; }
+        @page { size: A4 portrait; margin: 4mm; }
+        body { margin: 0; padding: 0; background: white; }
+        .page { width: 210mm; height: 297mm; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; padding: 0; }
+        .divider { border: none; border-top: 2px dashed #b8974a; margin: 3mm 0; }
       </style></head>
       <body>
-        ${makeCopy('الزبون')}
-        <div style="border-top:2px dashed #b8974a;width:100%;"></div>
-        ${makeCopy('الشركة')}
+        <div class="page">
+          ${makeCopy('الزبون')}
+          <hr class="divider" />
+          ${makeCopy('الشركة')}
+        </div>
         <script>window.onload = function(){ window.print(); window.close(); }<\/script>
       </body></html>
     `)
