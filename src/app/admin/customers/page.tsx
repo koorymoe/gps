@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getAllCustomersWithSubscriptions, deleteCustomer } from '@/lib/firebase/firestore'
+import { getAllCustomersWithSubscriptions, deleteCustomer, updateSubscriptionEnd } from '@/lib/firebase/firestore'
 import { formatDate, getRemainingDays } from '@/lib/utils'
 
-interface Subscription { gps_number?: string; sim_number?: string; subscription_end?: string; status?: string }
+interface Subscription { id: string; gps_number?: string; sim_number?: string; subscription_end?: string; status?: string }
 interface Customer { id: string; full_name: string; father_name: string; grandfather_name: string; phone: string; address: string; created_at: { seconds: number } | string; subscription: Subscription | null }
 
 export default function CustomersPage() {
@@ -13,6 +13,9 @@ export default function CustomersPage() {
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [deleting, setDeleting] = useState(false)
+  const [editCustomer, setEditCustomer] = useState<Customer | null>(null)
+  const [editDate, setEditDate] = useState('')
+  const [saving, setSaving] = useState(false)
 
   async function load() {
     const data = await getAllCustomersWithSubscriptions()
@@ -61,6 +64,25 @@ export default function CustomersPage() {
     setDeleting(false)
   }
 
+  function openEdit(c: Customer) {
+    setEditCustomer(c)
+    setEditDate(c.subscription?.subscription_end || '')
+  }
+
+  async function handleSaveDate() {
+    if (!editCustomer?.subscription?.id || !editDate) return
+    setSaving(true)
+    await updateSubscriptionEnd(editCustomer.subscription.id, editDate)
+    setCustomers(prev => prev.map(c =>
+      c.id === editCustomer.id
+        ? { ...c, subscription: c.subscription ? { ...c.subscription, subscription_end: editDate } : c.subscription }
+        : c
+    ))
+    setEditCustomer(null)
+    setEditDate('')
+    setSaving(false)
+  }
+
   function getStatusBadge(sub: Subscription | null) {
     if (!sub?.subscription_end) return <span className="text-gray-300 text-xs">-</span>
     const days = getRemainingDays(sub.subscription_end)
@@ -79,16 +101,46 @@ export default function CustomersPage() {
       <div className="flex gap-3 mb-4 items-center">
         <input className="input-field max-w-sm" value={search} onChange={e => setSearch(e.target.value)} placeholder="بحث بالاسم أو رقم الهاتف أو رقم GPS..." />
         {selected.size > 0 && (
-          <button
-            onClick={handleDeleteSelected}
-            disabled={deleting}
-            className="btn-primary"
-            style={{ width: 'auto', padding: '0.6rem 1.5rem', background: '#dc2626' }}
-          >
+          <button onClick={handleDeleteSelected} disabled={deleting} className="btn-primary"
+            style={{ width: 'auto', padding: '0.6rem 1.5rem', background: '#dc2626' }}>
             {deleting ? 'جارٍ الحذف...' : `🗑️ حذف المحددين (${selected.size})`}
           </button>
         )}
       </div>
+
+      {/* نافذة تعديل تاريخ الانتهاء */}
+      {editCustomer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.4)' }}>
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4">
+            <h3 className="font-bold text-lg mb-1" style={{ color: '#1a3a5c' }}>تعديل تاريخ الانتهاء</h3>
+            <p className="text-sm text-gray-500 mb-4">{editCustomer.full_name} {editCustomer.father_name} {editCustomer.grandfather_name}</p>
+            <div className="mb-4">
+              <label className="label">تاريخ انتهاء الاشتراك</label>
+              <input
+                type="date"
+                className="input-field"
+                value={editDate}
+                onChange={e => setEditDate(e.target.value)}
+              />
+              {editDate && (
+                <div className="mt-2 text-sm font-semibold" style={{ color: getRemainingDays(editDate) < 0 ? '#dc2626' : '#16a34a' }}>
+                  الأيام المتبقية: {(() => { const d = getRemainingDays(editDate); return d < 0 ? `${Math.abs(d)}-` : d })()}
+                </div>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button onClick={handleSaveDate} disabled={saving || !editDate} className="flex-1 py-2 rounded-xl font-semibold text-white"
+                style={{ background: '#1a3a5c' }}>
+                {saving ? 'جارٍ الحفظ...' : '✅ حفظ'}
+              </button>
+              <button onClick={() => setEditCustomer(null)} className="flex-1 py-2 rounded-xl font-semibold"
+                style={{ background: '#f1f5f9', color: '#64748b' }}>
+                إلغاء
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {loading ? <div className="text-center text-gray-400 py-20">جارٍ التحميل...</div> : (
         <div className="bg-white rounded-2xl shadow-sm overflow-x-auto">
@@ -106,6 +158,7 @@ export default function CustomersPage() {
                 <th className="px-5 py-3 font-semibold">الأيام المتبقية</th>
                 <th className="px-5 py-3 font-semibold">الحالة</th>
                 <th className="px-5 py-3 font-semibold">تاريخ التسجيل</th>
+                <th className="px-5 py-3 font-semibold">تعديل</th>
               </tr>
             </thead>
             <tbody>
@@ -129,6 +182,13 @@ export default function CustomersPage() {
                   </td>
                   <td className="px-5 py-4">{getStatusBadge(c.subscription)}</td>
                   <td className="px-5 py-4 text-gray-500 text-sm">{getDate(c.created_at)}</td>
+                  <td className="px-5 py-4">
+                    {c.subscription && (
+                      <button onClick={() => openEdit(c)} className="text-blue-500 hover:text-blue-700 text-sm font-semibold transition-colors">
+                        ✏️ تعديل
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

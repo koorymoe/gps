@@ -41,16 +41,20 @@ export async function getAllCustomersWithSubscriptions() {
     getDocs(query(collection(db, 'customers'), orderBy('created_at', 'desc'))),
     getDocs(collection(db, 'device_requests')),
   ])
-  const reqByCustomer: Record<string, { gps_number?: string; sim_number?: string; subscription_end?: string; status?: string }> = {}
+  const reqByCustomer: Record<string, { id: string; gps_number?: string; sim_number?: string; subscription_end?: string; status?: string }> = {}
   reqSnap.docs.forEach(d => {
     const data = d.data()
-    if (data.customer_id) reqByCustomer[data.customer_id] = data
+    if (data.customer_id) reqByCustomer[data.customer_id] = { id: d.id, ...data }
   })
   return custSnap.docs.map(d => ({
     id: d.id,
     ...d.data(),
     subscription: reqByCustomer[d.id] || null,
   }))
+}
+
+export async function updateSubscriptionEnd(requestId: string, subscriptionEnd: string) {
+  await updateDoc(doc(db, 'device_requests', requestId), { subscription_end: subscriptionEnd })
 }
 
 export async function deleteCustomer(customerId: string) {
