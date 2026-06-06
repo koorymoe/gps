@@ -118,11 +118,11 @@ export default function DeliveryPage() {
     `
 
     const makeCopy = (copyLabel: string) => `
-      <div style="width:197mm;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Arial,sans-serif;direction:rtl;background:white;position:relative;">
-        <div style="border:2px solid #b8974a;border-radius:6px;overflow:hidden;">
-          <img src="${IMG_FBANNER}" style="width:100%;display:block;" />
-          <div style="display:flex;">
-            <div style="flex:1;padding:6px 12px 6px 6px;">
+      <div style="width:100%;height:100%;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Arial,sans-serif;direction:rtl;background:white;">
+        <div style="border:2px solid #b8974a;border-radius:6px;overflow:hidden;height:100%;display:flex;flex-direction:column;">
+          <img src="${IMG_FBANNER}" style="width:100%;display:block;flex-shrink:0;" />
+          <div style="display:flex;flex:1;overflow:hidden;">
+            <div style="flex:1;padding:6px 12px 6px 6px;overflow:hidden;">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
                 <h2 style="font-size:12px;font-weight:bold;color:#1a3a5c;margin:0;">تعهد شراء جهاز GPS مع خط</h2>
                 <span style="font-size:8px;background:#1a3a5c;color:white;padding:2px 8px;border-radius:10px;">نسخة ${copyLabel}</span>
@@ -203,15 +203,16 @@ export default function DeliveryPage() {
       <html><head><title>تعهد شراء جهاز GPS مع خط</title>
       <style>
         @page { size: A4 portrait; margin: 5mm; }
-        body { margin: 0; padding: 0; background: white; }
-        .page { width: 200mm; display: flex; flex-direction: column; gap: 4mm; }
-        .divider { border: none; border-top: 2px dashed #b8974a; margin: 0; }
+        html, body { margin: 0; padding: 0; background: white; width: 200mm; height: 287mm; overflow: hidden; }
+        .page { width: 200mm; height: 287mm; overflow: hidden; display: flex; flex-direction: column; gap: 3mm; }
+        .copy { flex: 1; overflow: hidden; }
+        .divider { border: none; border-top: 2px dashed #b8974a; flex-shrink: 0; }
       </style></head>
       <body>
         <div class="page">
-          ${makeCopy('الزبون')}
+          <div class="copy">${makeCopy('الزبون')}</div>
           <hr class="divider" />
-          ${makeCopy('الشركة')}
+          <div class="copy">${makeCopy('الشركة')}</div>
         </div>
         <script>window.onload = function(){ window.print(); window.close(); }<\/script>
       </body></html>
