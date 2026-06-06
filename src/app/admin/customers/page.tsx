@@ -101,7 +101,9 @@ export default function CustomersPage() {
                 <th className="px-5 py-3 font-semibold">الاسم الكامل</th>
                 <th className="px-5 py-3 font-semibold">رقم الهاتف</th>
                 <th className="px-5 py-3 font-semibold">رقم GPS</th>
-                <th className="px-5 py-3 font-semibold">ID الجهاز</th>
+                <th className="px-5 py-3 font-semibold">ID جهاز GPS</th>
+                <th className="px-5 py-3 font-semibold">تاريخ انتهاء الاشتراك</th>
+                <th className="px-5 py-3 font-semibold">الأيام المتبقية</th>
                 <th className="px-5 py-3 font-semibold">الحالة</th>
                 <th className="px-5 py-3 font-semibold">تاريخ التسجيل</th>
               </tr>
@@ -116,6 +118,15 @@ export default function CustomersPage() {
                   <td className="px-5 py-4 text-gray-500">{c.phone}</td>
                   <td className="px-5 py-4 font-bold" style={{ color: '#1a3a5c' }}>{c.subscription?.sim_number || '-'}</td>
                   <td className="px-5 py-4 text-gray-500 text-sm">{c.subscription?.gps_number || '-'}</td>
+                  <td className="px-5 py-4 text-sm font-medium" style={{ color: '#dc2626' }}>
+                    {c.subscription?.subscription_end ? formatDate(c.subscription.subscription_end) : '-'}
+                  </td>
+                  <td className="px-5 py-4 font-bold text-sm">
+                    {c.subscription?.subscription_end ? (() => {
+                      const d = getRemainingDays(c.subscription.subscription_end)
+                      return <span style={{ color: d < 0 ? '#dc2626' : d < 30 ? '#d97706' : '#16a34a' }}>{d < 0 ? `${Math.abs(d)}-` : d}</span>
+                    })() : '-'}
+                  </td>
                   <td className="px-5 py-4">{getStatusBadge(c.subscription)}</td>
                   <td className="px-5 py-4 text-gray-500 text-sm">{getDate(c.created_at)}</td>
                 </tr>
