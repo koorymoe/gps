@@ -157,7 +157,6 @@ export default function CustomersPage() {
                 <th className="px-5 py-3 font-semibold">تاريخ انتهاء الاشتراك</th>
                 <th className="px-5 py-3 font-semibold">الأيام المتبقية</th>
                 <th className="px-5 py-3 font-semibold">الحالة</th>
-                <th className="px-5 py-3 font-semibold">تاريخ التسجيل</th>
                 <th className="px-5 py-3 font-semibold">تعديل</th>
               </tr>
             </thead>
@@ -167,7 +166,14 @@ export default function CustomersPage() {
                   <td className="px-4 py-4">
                     <input type="checkbox" checked={selected.has(c.id)} onChange={() => toggleSelect(c.id)} className="w-4 h-4 cursor-pointer" />
                   </td>
-                  <td className="px-5 py-4 font-medium text-gray-800">{c.full_name} {c.father_name} {c.grandfather_name}</td>
+                  <td className="px-5 py-4 font-medium text-gray-800">
+                    <div className="flex items-center gap-2">
+                      <span>{c.full_name} {c.father_name} {c.grandfather_name}</span>
+                      {c.subscription && (
+                        <button onClick={() => openEdit(c)} className="text-blue-400 hover:text-blue-600 text-xs font-semibold transition-colors flex-shrink-0">✏️</button>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-5 py-4 text-gray-500">{c.phone}</td>
                   <td className="px-5 py-4 font-bold" style={{ color: '#1a3a5c' }}>{c.subscription?.sim_number || '-'}</td>
                   <td className="px-5 py-4 text-gray-500 text-sm">{c.subscription?.gps_number || '-'}</td>
@@ -182,13 +188,6 @@ export default function CustomersPage() {
                   </td>
                   <td className="px-5 py-4">{getStatusBadge(c.subscription)}</td>
                   <td className="px-5 py-4 text-gray-500 text-sm">{getDate(c.created_at)}</td>
-                  <td className="px-5 py-4">
-                    {c.subscription && (
-                      <button onClick={() => openEdit(c)} className="text-blue-500 hover:text-blue-700 text-sm font-semibold transition-colors">
-                        ✏️ تعديل
-                      </button>
-                    )}
-                  </td>
                 </tr>
               ))}
             </tbody>
