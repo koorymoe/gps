@@ -5,12 +5,18 @@ import { useRouter } from 'next/navigation'
 import { auth } from '@/lib/firebase/config'
 import { createCustomer, createMaintenanceRequest } from '@/lib/firebase/firestore'
 
+const IRAQI_GOVERNORATES = [
+  'بغداد', 'البصرة', 'نينوى', 'أربيل', 'النجف', 'كربلاء', 'الأنبار', 'ذي قار',
+  'ديالى', 'كركوك', 'بابل', 'واسط', 'صلاح الدين', 'القادسية', 'ميسان',
+  'المثنى', 'دهوك', 'السليمانية',
+]
+
 export default function MaintenancePage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
-  const [form, setForm] = useState({ full_name: '', father_name: '', grandfather_name: '', phone: '', address: '', problem_type: 'delay_activation', problem_description: '' })
+  const [form, setForm] = useState({ full_name: '', father_name: '', grandfather_name: '', phone: '', governorate: '', address: '', problem_type: 'delay_activation', problem_description: '' })
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -22,7 +28,7 @@ export default function MaintenancePage() {
 
       const customerId = await createCustomer({
         full_name: form.full_name, father_name: form.father_name,
-        grandfather_name: form.grandfather_name, phone: form.phone, address: form.address,
+        grandfather_name: form.grandfather_name, phone: form.phone, address: `${form.governorate} - ${form.address}`,
         id_card_front_url: '', id_card_back_url: '',
         residence_card_front_url: '', residence_card_back_url: '',
       })
@@ -43,7 +49,7 @@ export default function MaintenancePage() {
         <p className="text-gray-500 mb-6">سيتم مراجعته من قبل الموظف الإداري</p>
         <div className="flex gap-3">
           <button onClick={() => router.push('/employee')} className="btn-primary">الرئيسية</button>
-          <button onClick={() => { setSuccess(false); setForm({ full_name: '', father_name: '', grandfather_name: '', phone: '', address: '', problem_type: 'delay_activation', problem_description: '' }) }} className="btn-secondary">طلب جديد</button>
+          <button onClick={() => { setSuccess(false); setForm({ full_name: '', father_name: '', grandfather_name: '', phone: '', governorate: '', address: '', problem_type: 'delay_activation', problem_description: '' }) }} className="btn-secondary">طلب جديد</button>
         </div>
       </div>
     )
@@ -72,8 +78,15 @@ export default function MaintenancePage() {
               <input className="input-field" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} required placeholder="07XXXXXXXXX" />
             </div>
             <div>
-              <label className="label">العنوان *</label>
-              <input className="input-field" value={form.address} onChange={e => setForm(p => ({ ...p, address: e.target.value }))} required placeholder="المحافظة / المنطقة" />
+              <label className="label">المحافظة *</label>
+              <select className="input-field" value={form.governorate} onChange={e => setForm(p => ({ ...p, governorate: e.target.value }))} required>
+                <option value="">اختر المحافظة</option>
+                {IRAQI_GOVERNORATES.map(g => <option key={g} value={g}>{g}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="label">العنوان (المنطقة) *</label>
+              <input className="input-field" value={form.address} onChange={e => setForm(p => ({ ...p, address: e.target.value }))} required placeholder="المنطقة / الشارع" />
             </div>
           </div>
         </div>

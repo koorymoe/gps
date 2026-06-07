@@ -103,7 +103,7 @@ export default function DeliveryPage() {
         width:138mm; height:195mm; box-sizing:border-box; position:relative;
         font-family:'Segoe UI',Tahoma,Arial,sans-serif; direction:rtl;
         border:2px solid #b8974a; border-radius:5px; overflow:hidden;
-        background:white; page-break-after:always;
+        background:white;
       ">
         <!-- محتوى -->
         <div style="display:flex; height:175mm; overflow:hidden;">
@@ -191,12 +191,17 @@ export default function DeliveryPage() {
     doc.write(`<!DOCTYPE html><html><head>
       <meta charset="utf-8"/>
       <style>
-        @page { size: A5 portrait; margin: 4mm; }
+        @page { size: A4 portrait; margin: 5mm; }
         body { margin: 0; padding: 0; background: white; }
+        .half { width:100%; height:143mm; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+        .half > div { transform: scale(0.73); transform-origin: center center; }
+        .cut-line { border-top:1px dashed #999; margin:2mm 0; position:relative; height:0; }
+        .cut-line span { position:absolute; right:50%; top:-2.5mm; transform:translateX(50%); background:white; padding:0 4px; font-size:7px; color:#999; font-family:Tahoma,Arial,sans-serif; }
       </style>
     </head><body>
-      ${copy('الزبون')}
-      ${copy('الشركة')}
+      <div class="half">${copy('الزبون')}</div>
+      <div class="cut-line"><span>✂ خط القص</span></div>
+      <div class="half">${copy('الشركة')}</div>
     </body></html>`)
     doc.close()
     iframe.onload = () => {

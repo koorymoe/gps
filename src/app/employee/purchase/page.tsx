@@ -9,6 +9,12 @@ import { SubscriptionType } from '@/types'
 type PurchaseType = 'device_sim' | 'device_only'
 type Step = 'select_type' | 'form'
 
+const IRAQI_GOVERNORATES = [
+  'بغداد', 'البصرة', 'نينوى', 'أربيل', 'النجف', 'كربلاء', 'الأنبار', 'ذي قار',
+  'ديالى', 'كركوك', 'بابل', 'واسط', 'صلاح الدين', 'القادسية', 'ميسان',
+  'المثنى', 'دهوك', 'السليمانية',
+]
+
 export default function PurchasePage() {
   const router = useRouter()
   const [step, setStep] = useState<Step>('select_type')
@@ -20,7 +26,7 @@ export default function PurchasePage() {
 
   const [form, setForm] = useState({
     full_name: '', father_name: '', grandfather_name: '',
-    phone: '', address: '', subscription_type: '' as SubscriptionType | '',
+    phone: '', governorate: '', address: '', subscription_type: '' as SubscriptionType | '',
     gps_number: '', residence_card_number: '',
   })
 
@@ -82,7 +88,7 @@ export default function PurchasePage() {
 
       const customerId = await createCustomer({
         full_name: form.full_name, father_name: form.father_name,
-        grandfather_name: form.grandfather_name, phone: form.phone, address: form.address,
+        grandfather_name: form.grandfather_name, phone: form.phone, address: `${form.governorate} - ${form.address}`,
         id_card_front_url: idF, id_card_back_url: idB,
         residence_card_front_url: resF, residence_card_back_url: resB,
       })
@@ -108,7 +114,7 @@ export default function PurchasePage() {
 
   function resetForm() {
     setSuccess(false); setStep('select_type')
-    setForm({ full_name: '', father_name: '', grandfather_name: '', phone: '', address: '', subscription_type: '', gps_number: '', residence_card_number: '' })
+    setForm({ full_name: '', father_name: '', grandfather_name: '', phone: '', governorate: '', address: '', subscription_type: '', gps_number: '', residence_card_number: '' })
     setFiles({ id_card_front: null, id_card_back: null, residence_card_front: null, residence_card_back: null, invoice_photo: null })
     setPreviews({ id_card_front: '', id_card_back: '', residence_card_front: '', residence_card_back: '', invoice_photo: '' })
   }
@@ -172,8 +178,17 @@ export default function PurchasePage() {
                 <input className="input-field" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} required placeholder="07XXXXXXXXX" />
               </div>
               <div>
-                <label className="label">العنوان *</label>
-                <input className="input-field" value={form.address} onChange={e => setForm(p => ({ ...p, address: e.target.value }))} required placeholder="المحافظة / المنطقة / الشارع" />
+                <label className="label">المحافظة *</label>
+                <select className="input-field" value={form.governorate} onChange={e => setForm(p => ({ ...p, governorate: e.target.value }))} required>
+                  <option value="">اختر المحافظة</option>
+                  {IRAQI_GOVERNORATES.map(g => <option key={g} value={g}>{g}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-4 mt-4">
+              <div>
+                <label className="label">العنوان (المنطقة / الشارع) *</label>
+                <input className="input-field" value={form.address} onChange={e => setForm(p => ({ ...p, address: e.target.value }))} required placeholder="المنطقة / الشارع / أقرب نقطة دالة" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4 mt-4">
