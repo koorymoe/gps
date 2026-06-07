@@ -150,7 +150,7 @@ export default function DeliveryPage() {
               </tr>
             </table>
             <div style="font-weight:bold;font-size:9px;color:#1a3a5c;border-bottom:1px solid #c9a84c;padding-bottom:2px;margin-bottom:4px;">بنود العقد</div>
-            <ol style="margin:0;padding-right:14px;font-size:7.8px;line-height:1.85;color:#222;columns:2;column-gap:14px;">
+            <ol style="margin:0;padding-right:16px;font-size:9px;line-height:2.5;color:#222;columns:2;column-gap:16px;">
               <li>يلتزم المشتري بدفع الاشتراك الشهري في موعده وفي حال التأخر يتحمل المسؤولية الكاملة عن أي انقطاع.</li>
               <li>الجهاز ملك للمشتري وعليه المحافظة عليه وفي حال تلفه يتحمل تكلفة الاستبدال كاملاً.</li>
               <li>لا تتحمل الشركة مسؤولية الضرر الناجم عن انقطاع الإنترنت أو الكهرباء أو أي قوة قاهرة.</li>
@@ -164,11 +164,11 @@ export default function DeliveryPage() {
               <li>يحق للشركة تعديل أسعار الاشتراك مع إشعار المشتري قبل شهر من التعديل.</li>
               <li>يُقر المشتري بأنه اطلع على جميع بنود هذا العقد ووافق عليها طوعاً واختياراً.</li>
             </ol>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:5px;font-size:7px;border-top:1px dashed #c9a84c;padding-top:3px;margin-top:3px;">
-              <div style="text-align:center;"><div style="height:14px;border-bottom:1px solid #333;margin-bottom:1px;"></div><div>توقيع المشتري</div></div>
-              <div style="text-align:center;"><div style="height:14px;border-bottom:1px solid #333;margin-bottom:1px;"></div><div>اسم الفني</div></div>
-              <div style="text-align:center;"><div style="height:14px;border-bottom:1px solid #333;margin-bottom:1px;"></div><div>توقيع مخول</div></div>
-              <div style="text-align:center;"><div style="height:14px;border-bottom:1px solid #333;margin-bottom:1px;font-size:7.5px;font-weight:bold;padding-top:2px;">${today}</div><div>التاريخ</div></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;font-size:8px;border-top:1px dashed #c9a84c;padding-top:6px;margin-top:6px;">
+              <div style="text-align:center;"><div style="height:22px;border-bottom:1px solid #333;margin-bottom:2px;"></div><div>توقيع المشتري</div></div>
+              <div style="text-align:center;"><div style="height:22px;border-bottom:1px solid #333;margin-bottom:2px;"></div><div>اسم الفني</div></div>
+              <div style="text-align:center;"><div style="height:22px;border-bottom:1px solid #333;margin-bottom:2px;"></div><div>توقيع مخول</div></div>
+              <div style="text-align:center;"><div style="height:22px;border-bottom:1px solid #333;margin-bottom:2px;font-size:8.5px;font-weight:bold;padding-top:4px;">${today}</div><div>التاريخ</div></div>
             </div>
           </div>
           <img src="${vstripUrl}" style="width:22px;display:block;object-fit:cover;flex-shrink:0;" />
