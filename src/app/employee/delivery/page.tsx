@@ -100,62 +100,57 @@ export default function DeliveryPage() {
 
     const copy = (label: string) => `
       <div style="
-        width:138mm; height:195mm; box-sizing:border-box; position:relative;
+        width:190mm; height:136mm; box-sizing:border-box; position:relative;
         font-family:'Segoe UI',Tahoma,Arial,sans-serif; direction:rtl;
         border:2px solid #b8974a; border-radius:5px; overflow:hidden;
         background:white;
       ">
+        <!-- البنر في الأعلى -->
+        <img src="${bannerUrl}" style="position:absolute;top:0;left:0;width:100%;height:13mm;object-fit:cover;object-position:center;" />
         <!-- محتوى -->
-        <div style="display:flex; height:175mm; overflow:hidden;">
-          <div style="flex:1; padding:8px 12px 8px 6px; overflow:hidden;">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px;padding-bottom:5px;border-bottom:2px solid #b8974a;">
+        <div style="position:absolute; top:13mm; right:0; left:0; bottom:0; display:flex; overflow:hidden;">
+          <div style="flex:1; padding:6px 10px 6px 6px; overflow:hidden;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;padding-bottom:3px;border-bottom:2px solid #b8974a;">
               <div>
-                <div style="font-size:12px;font-weight:bold;color:#1a3a5c;">شركة الأماني للتجارة العامة</div>
-                <div style="font-size:9px;color:#555;">والاستثمارات العقارية والوكالات التجارية م.م</div>
-                <div style="font-size:9px;color:#888;margin-top:2px;">تعهد شراء جهاز GPS مع خط</div>
+                <div style="font-size:11px;font-weight:bold;color:#1a3a5c;">شركة الأماني للتجارة العامة</div>
+                <div style="font-size:8px;color:#888;">تعهد شراء جهاز GPS مع خط</div>
               </div>
               <div style="text-align:left;">
                 <span style="font-size:8px;background:#1a3a5c;color:white;padding:2px 8px;border-radius:10px;">نسخة ${label}</span>
-                <div style="font-size:8px;color:#888;margin-top:3px;">رقم: ${accountNum} | ${today}</div>
+                <div style="font-size:7.5px;color:#888;margin-top:2px;">رقم: ${accountNum} | ${today}</div>
               </div>
             </div>
-            <div style="font-size:8px;color:#333;margin-bottom:5px;padding:4px 7px;border:1px solid #e8d8b0;border-radius:4px;background:#fffdf5;line-height:1.5;">
+            <div style="font-size:7.5px;color:#333;margin-bottom:4px;padding:3px 6px;border:1px solid #e8d8b0;border-radius:4px;background:#fffdf5;line-height:1.4;">
               إني <strong>${customerName}</strong> اشتريت جهاز GPS من <strong>شركة الأماني للتجارة العامة والاستثمارات العقارية والوكالات التجارية محدودة المسؤولية</strong> وأوافق على جميع بنود هذا العقد
             </div>
-            <table style="width:100%;border-collapse:collapse;font-size:8.5px;margin-bottom:5px;">
+            <table style="width:100%;border-collapse:collapse;font-size:7.5px;margin-bottom:4px;">
               <tr>
-                <td style="padding:3px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;width:25%;">رقم الهاتف</td>
-                <td style="padding:3px 5px;border:1px solid #d4b896;width:25%;">${req.customer?.phone || '___'}</td>
-                <td style="padding:3px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;width:25%;">عنوان السكن</td>
-                <td style="padding:3px 5px;border:1px solid #d4b896;width:25%;">${req.customer?.address || '___'}</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;width:16%;">رقم الهاتف</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;width:18%;">${req.customer?.phone || '___'}</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;width:16%;">عنوان السكن</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;width:18%;">${req.customer?.address || '___'}</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;width:16%;">نوع الاشتراك</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;font-weight:bold;width:16%;">${subLabel}</td>
               </tr>
               <tr>
-                <td style="padding:3px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">رقم البطاقة الوطنية</td>
-                <td style="padding:3px 5px;border:1px solid #d4b896;">${nationalId}</td>
-                <td style="padding:3px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">رقم بطاقة السكن</td>
-                <td style="padding:3px 5px;border:1px solid #d4b896;">${residenceNum}</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">رقم البطاقة الوطنية</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;">${nationalId}</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">رقم بطاقة السكن</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;">${residenceNum}</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">نوع المركبة</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;">___________</td>
               </tr>
               <tr>
-                <td style="padding:3px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">نوع الاشتراك</td>
-                <td style="padding:3px 5px;border:1px solid #d4b896;font-weight:bold;">${subLabel}</td>
-                <td style="padding:3px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">نوع المركبة</td>
-                <td style="padding:3px 5px;border:1px solid #d4b896;">___________</td>
-              </tr>
-              <tr>
-                <td style="padding:3px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">رقم المركبة/الشاسيه</td>
-                <td style="padding:3px 5px;border:1px solid #d4b896;">___________</td>
-                <td style="padding:3px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">اللون</td>
-                <td style="padding:3px 5px;border:1px solid #d4b896;">___________</td>
-              </tr>
-              <tr>
-                <td style="padding:3px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">ID GPS (رقم الجهاز)</td>
-                <td style="padding:3px 5px;border:1px solid #d4b896;font-weight:bold;color:#1a3a5c;">${gpsNum}</td>
-                <td style="padding:3px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">رقم الشريحة</td>
-                <td style="padding:3px 5px;border:1px solid #d4b896;font-weight:bold;">${simNum}</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">ID GPS (رقم الجهاز)</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;font-weight:bold;color:#1a3a5c;">${gpsNum}</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">رقم الشريحة</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;font-weight:bold;">${simNum}</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;background:#f8f4ee;font-weight:600;">اللون</td>
+                <td style="padding:2px 5px;border:1px solid #d4b896;">___________</td>
               </tr>
             </table>
-            <div style="font-weight:bold;font-size:9px;color:#1a3a5c;border-bottom:1px solid #c9a84c;padding-bottom:2px;margin-bottom:3px;">بنود العقد</div>
-            <ol style="margin:0;padding-right:14px;font-size:7px;line-height:1.55;color:#222;columns:2;column-gap:10px;">
+            <div style="font-weight:bold;font-size:8px;color:#1a3a5c;border-bottom:1px solid #c9a84c;padding-bottom:2px;margin-bottom:2px;">بنود العقد</div>
+            <ol style="margin:0;padding-right:13px;font-size:6.3px;line-height:1.45;color:#222;columns:3;column-gap:8px;">
               <li>يلتزم المشتري بدفع الاشتراك الشهري في موعده وفي حال التأخر يتحمل المسؤولية الكاملة عن أي انقطاع.</li>
               <li>الجهاز ملك للمشتري وعليه المحافظة عليه وفي حال تلفه يتحمل تكلفة الاستبدال كاملاً.</li>
               <li>لا تتحمل الشركة مسؤولية الضرر الناجم عن انقطاع الإنترنت أو الكهرباء أو أي قوة قاهرة.</li>
@@ -169,17 +164,15 @@ export default function DeliveryPage() {
               <li>يحق للشركة تعديل أسعار الاشتراك مع إشعار المشتري قبل شهر من التعديل.</li>
               <li>يُقر المشتري بأنه اطلع على جميع بنود هذا العقد ووافق عليها طوعاً واختياراً.</li>
             </ol>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:5px;font-size:7.5px;border-top:1px dashed #c9a84c;padding-top:4px;margin-top:5px;">
-              <div style="text-align:center;"><div style="height:20px;border-bottom:1px solid #333;margin-bottom:2px;"></div><div>توقيع المشتري</div></div>
-              <div style="text-align:center;"><div style="height:20px;border-bottom:1px solid #333;margin-bottom:2px;"></div><div>اسم الفني</div></div>
-              <div style="text-align:center;"><div style="height:20px;border-bottom:1px solid #333;margin-bottom:2px;"></div><div>توقيع مخول</div></div>
-              <div style="text-align:center;"><div style="height:20px;border-bottom:1px solid #333;margin-bottom:2px;font-size:8px;font-weight:bold;padding-top:4px;">${today}</div><div>التاريخ</div></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:5px;font-size:7px;border-top:1px dashed #c9a84c;padding-top:3px;margin-top:3px;">
+              <div style="text-align:center;"><div style="height:14px;border-bottom:1px solid #333;margin-bottom:1px;"></div><div>توقيع المشتري</div></div>
+              <div style="text-align:center;"><div style="height:14px;border-bottom:1px solid #333;margin-bottom:1px;"></div><div>اسم الفني</div></div>
+              <div style="text-align:center;"><div style="height:14px;border-bottom:1px solid #333;margin-bottom:1px;"></div><div>توقيع مخول</div></div>
+              <div style="text-align:center;"><div style="height:14px;border-bottom:1px solid #333;margin-bottom:1px;font-size:7.5px;font-weight:bold;padding-top:2px;">${today}</div><div>التاريخ</div></div>
             </div>
           </div>
-          <img src="${vstripUrl}" style="width:28px;display:block;object-fit:cover;flex-shrink:0;" />
+          <img src="${vstripUrl}" style="width:22px;display:block;object-fit:cover;flex-shrink:0;" />
         </div>
-        <!-- البنر في الأسفل -->
-        <img src="${bannerUrl}" style="position:absolute;bottom:0;left:0;width:100%;height:20mm;object-fit:cover;object-position:center;" />
       </div>
     `
 
@@ -192,16 +185,14 @@ export default function DeliveryPage() {
       <meta charset="utf-8"/>
       <style>
         @page { size: A4 portrait; margin: 5mm; }
-        body { margin: 0; padding: 0; background: white; }
-        .half { width:101mm; height:142mm; overflow:hidden; position:relative; margin:0 auto; }
-        .half > div { position:absolute; top:0; right:0; transform: scale(0.73); transform-origin: top right; }
-        .cut-line { border-top:1px dashed #999; margin:2mm 0; position:relative; height:0; }
+        body { margin: 0; padding: 0; background: white; display:flex; flex-direction:column; align-items:center; }
+        .cut-line { width:190mm; border-top:1px dashed #999; margin:3mm 0; position:relative; height:0; }
         .cut-line span { position:absolute; right:50%; top:-2.5mm; transform:translateX(50%); background:white; padding:0 4px; font-size:7px; color:#999; font-family:Tahoma,Arial,sans-serif; }
       </style>
     </head><body>
-      <div class="half">${copy('الزبون')}</div>
+      ${copy('الزبون')}
       <div class="cut-line"><span>✂ خط القص</span></div>
-      <div class="half">${copy('الشركة')}</div>
+      ${copy('الشركة')}
     </body></html>`)
     doc.close()
     iframe.onload = () => {
