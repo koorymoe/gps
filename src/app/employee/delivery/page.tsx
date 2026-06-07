@@ -193,8 +193,8 @@ export default function DeliveryPage() {
       <style>
         @page { size: A4 portrait; margin: 5mm; }
         body { margin: 0; padding: 0; background: white; }
-        .half { width:100%; height:143mm; overflow:hidden; display:flex; align-items:center; justify-content:center; }
-        .half > div { transform: scale(0.73); transform-origin: center center; }
+        .half { width:101mm; height:142mm; overflow:hidden; position:relative; margin:0 auto; }
+        .half > div { position:absolute; top:0; right:0; transform: scale(0.73); transform-origin: top right; }
         .cut-line { border-top:1px dashed #999; margin:2mm 0; position:relative; height:0; }
         .cut-line span { position:absolute; right:50%; top:-2.5mm; transform:translateX(50%); background:white; padding:0 4px; font-size:7px; color:#999; font-family:Tahoma,Arial,sans-serif; }
       </style>
