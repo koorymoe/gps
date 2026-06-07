@@ -105,10 +105,10 @@ export default function DeliveryPage() {
         border:2px solid #b8974a; border-radius:5px; overflow:hidden;
         background:white;
       ">
-        <!-- البنر في الأعلى -->
-        <img src="${bannerUrl}" style="position:absolute;top:0;left:0;width:100%;height:13mm;object-fit:cover;object-position:center;" />
+        <!-- البنر في الأسفل -->
+        <img src="${bannerUrl}" style="position:absolute;bottom:0;left:0;width:100%;height:13mm;object-fit:cover;object-position:center;" />
         <!-- محتوى -->
-        <div style="position:absolute; top:13mm; right:0; left:0; bottom:0; display:flex; overflow:hidden;">
+        <div style="position:absolute; top:0; right:0; left:0; bottom:13mm; display:flex; overflow:hidden;">
           <div style="flex:1; padding:6px 10px 6px 6px; overflow:hidden;">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;padding-bottom:3px;border-bottom:2px solid #b8974a;">
               <div>
